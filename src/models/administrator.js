@@ -18,7 +18,7 @@ const administratorSchema = new Schema({
         required:true,
         trim:true
     },
-    celular:{
+    telefono:{
         type:String,
         trim:true,
         default:null
@@ -43,7 +43,7 @@ const administratorSchema = new Schema({
     },
     rol:{
         type:String,
-        default:"administrador"
+        default:"Administrador"
     }
 
 },{

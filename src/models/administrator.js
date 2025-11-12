@@ -7,16 +7,16 @@ const administratorSchema = new Schema({
         required:true,
         trim:true
     },
+    apellido:{
+        type:String,
+        required:true,
+        trim:true
+    },
     cedula:{
         type:String,
         required:true,
         trim:true,
         unique:true
-    },
-    apellido:{
-        type:String,
-        required:true,
-        trim:true
     },
     telefono:{
         type:String,

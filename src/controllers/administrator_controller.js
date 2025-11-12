@@ -21,8 +21,8 @@ const registro = async (req, res) => {
 
     const token = nuevoAdmin.createToken()
     await nuevoAdmin.save()
-
-        console.log("Admin creado",token)
+    res.status(200).json({msg:`Administrador creado ${token}`})
+    
   } catch (error) {
     res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
   }
@@ -41,7 +41,7 @@ const login = async(req,res)=>{
 
         const AdministradorBDD = await Administrator.findOne({email}).select("-status -__v -token -updatedAt -createdAt")
         if(!AdministradorBDD) 
-          return res.status(404).json({msg:"Usuario o contraseña incorrectos"})
+          return res.status(404).json({msg:"Usuario o contraseña es incorrecto"})
 
         if(!AdministradorBDD.email) 
           return res.status(403).json({msg:"Debes verificar tu cuenta antes de iniciar sesión"})
@@ -49,7 +49,7 @@ const login = async(req,res)=>{
         const verificarPassword = await AdministradorBDD.matchPassword(password)
 
         if(!verificarPassword) 
-          return res.status(401).json({msg:"Usuario o contraseña incorrectos"})
+          return res.status(401).json({msg:"Usuario o contraseña es incorrecto"})
 
         const {nombre,apellido,cedula,telefono,_id} = AdministradorBDD
         const token = crearTokenJWT(AdministradorBDD._id, AdministradorBDD.rol)
@@ -103,9 +103,27 @@ const actualizarPerfil = async (req,res)=>{
 }
 
 
+const actualizarPassword = async (req,res)=>{
+
+    const administradorBDD = await Administrator.findById(req.administratorHeader._id)
+    if(!administradorBDD) 
+      return res.status(404).json({msg:`Lo sentimos, no existe el administrador ${id}`})
+
+
+    const verificarPassword = await administradorBDD.matchPassword(req.body.passwordactual)
+    if(!verificarPassword) 
+      return res.status(404).json({msg:"Lo sentimos, el password actual no es el correcto"})
+    administradorBDD.password = await administradorBDD.encryptPassword(req.body.passwordnuevo)
+
+    await administradorBDD.save()
+    res.status(200).json({msg:"Password actualizado correctamente"})
+}
+
+
 export {
   registro,
   login,
   perfil,
-  actualizarPerfil
+  actualizarPerfil,
+  actualizarPassword
 }

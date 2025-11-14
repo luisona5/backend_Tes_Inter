@@ -2,6 +2,7 @@ import express from 'express' // facilita crear servidores web, APIs, manejar ru
 import dotenv from 'dotenv' //  sirve para cargar variables de entorno desde un archivo .env en process.env. 
 import cors from 'cors'  // Este middleware permite configurar y manejar el acceso entre dominios diferentes en las solicitudes HTTP.
 import routerAdmin from './routers/Administrator_routes.js'
+import routerDirector from './routers/Director_routes.js'
 
 
  const app = express()
@@ -28,13 +29,12 @@ app.get('/',(req,res)=>{
     res.send('Server on')
 })
 
- // --------------------------------------rutas de administrador----------------------------
 
 app.use('/api', routerAdmin)
-  
- //-------> REQ = peticion del cliente
- //-------> RES = es la respuesta que le va a dar al cliente
 
+app.use('/api',routerDirector)
+  
+ 
  app.use((req,res)=>{res.status(404).send('Endpoint no encontrado')})
 
 

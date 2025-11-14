@@ -120,10 +120,12 @@ const actualizarPassword = async (req,res)=>{
 }
 
 
+
+
 export {
   registro,
   login,
   perfil,
   actualizarPerfil,
-  actualizarPassword
+  actualizarPassword,
 }

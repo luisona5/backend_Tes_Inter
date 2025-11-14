@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken"
 import administrator from "../models/administrator.js"
+import directordeEvento from "../models/directordeEvento.js"
 
 
 /**
@@ -11,8 +12,6 @@ import administrator from "../models/administrator.js"
 const crearTokenJWT = (id, rol) => {
     return jwt.sign({ id, rol }, process.env.JWT_SECRET, { expiresIn: "1d" })
 }
-
-
 
 
 const verificarTokenJWT = async (req, res, next) => {
@@ -28,15 +27,24 @@ const verificarTokenJWT = async (req, res, next) => {
             req.administratorHeader = administradorBDD
             next()
         }
+        else{
+            const DirectorBDD = await directordeEvento.findById(id).lean().select("-password")
+            if (!DirectorBDD) return res.status(401).json({ msg: "Usuario no encontrado" })
+            req.directorHeader = DirectorBDD
+            next()
+        }
     } catch (error) {
         console.log(error)
         return res.status(401).json({ msg: `Token inválido o expirado - ${error}` })
-    }
+    }       
+   
 }
 
 
 export { 
     crearTokenJWT,
-    verificarTokenJWT 
+    verificarTokenJWT,
+     
+    
 }
 

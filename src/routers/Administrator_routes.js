@@ -15,4 +15,5 @@ router.put('/actualizarperfil/:id',verificarTokenJWT,actualizarPerfil)
 
 router.put('/actualizarpassword/:id',verificarTokenJWT,actualizarPassword)
 
+
 export default router

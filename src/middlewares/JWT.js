@@ -27,6 +27,7 @@ const verificarTokenJWT = async (req, res, next) => {
             req.administratorHeader = administradorBDD
             next()
         }
+        
         else{
             const DirectorBDD = await directordeEvento.findById(id).lean().select("-password")
             if (!DirectorBDD) return res.status(401).json({ msg: "Usuario no encontrado" })

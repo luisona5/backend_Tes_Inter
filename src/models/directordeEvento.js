@@ -6,7 +6,8 @@ const directorSchema = new Schema({
    cedulaDirector:{
         type:String,
         required:true,
-        trim:true
+        trim:true,
+        unique:true
     },
     nombreDirector:{
         type:String,
@@ -26,7 +27,9 @@ const directorSchema = new Schema({
     },
     passwordDirector:{
         type:String,
-        required:true
+        required:true,
+        default:null
+
     },
     telefonoDirector:{
         type:String,
@@ -37,6 +40,10 @@ const directorSchema = new Schema({
     estadoDirector:{
         type:Boolean,
         default:true
+    },
+    token:{
+        type:String,
+        default:null
     },
     rol:{
         type:String,
@@ -64,4 +71,4 @@ directorSchema.methods.matchPassword = async function(password){
 }
 
 
-export default model('DirectordeEvento',directorSchema)
+export default model('Director',directorSchema)

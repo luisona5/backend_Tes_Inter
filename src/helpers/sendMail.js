@@ -4,7 +4,7 @@ const sendMailToOwner = (userMail, password) => {
 
     return sendMail(
         userMail,
-        "Bienvenido - Director",
+        "Bienvenido - Director ",
         `
            <title>Bienvenido a POLISPORT</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,7 +37,7 @@ const sendMailToOwner = (userMail, password) => {
                 Para iniciar sesión, haz clic en el botón de abajo:
               </p>
               <p style="text-align:center;margin:0 0 30px 0;">
-                <a href="${process.env.VITE_BACKEND_URL}/login" style="display:inline-block;padding:12px 20px;background-color:#007BFF;color:#ffffff;text-decoration:none;border-radius:5px;font-size:16px;">
+                <a href="${process.env.URL_FRONTEND}/login" style="display:inline-block;padding:12px 20px;background-color:#007BFF;color:#ffffff;text-decoration:none;border-radius:5px;font-size:16px;">
                   Iniciar sesión
                 </a>
               </p>

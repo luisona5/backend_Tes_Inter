@@ -53,7 +53,7 @@ const administratorSchema = new Schema({
 // metodo para cifrar el password
 
 administratorSchema.methods.encryptPassword = async function(password){
-    const salt= await bcrypt.genSalt(10)                   // para produccion se debe poner un factor de 12 o 14 
+    const salt= await bcrypt.genSalt(10)    // para produccion se debe poner un factor de 12 o 14 
     const passwordEncryp = await bcrypt.hash(password,salt)
     return passwordEncryp
 }

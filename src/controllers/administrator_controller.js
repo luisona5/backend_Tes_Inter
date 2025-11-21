@@ -40,6 +40,13 @@ const login = async(req,res)=>{
         if (Object.values(req.body).includes("")) 
           
           return res.status(404).json({msg:"Debes llenar todos los campos"})
+        
+        // validando para que ingresen solo usuarios de la poli
+        const dominio = "epn.edu.ec";
+        
+        if (!email.toLowerCase().endsWith(`@${dominio}`)) {
+            return res.status(403).json({msg:`ingreso con correo institucional EPN`});
+        }
 
         const AdministradorBDD = await Administrator.findOne({email}).select("-status -__v -token -updatedAt -createdAt")
         if(!AdministradorBDD.email) 
@@ -60,6 +67,8 @@ const login = async(req,res)=>{
             token
         })
 
+        
+
     } catch (error) {
         console.error(error)
         res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
@@ -69,7 +78,7 @@ const login = async(req,res)=>{
 
 const perfil =(req,res)=>{
 
-	const {tokem,email,createdAt,updatedAt,__v,...datosPerfil} = req.administratorHeader
+	const {tokem,createdAt,updatedAt,__v,...datosPerfil} = req.administratorHeader
 
     res.status(200).json(datosPerfil)
 }
@@ -78,53 +87,42 @@ const perfil =(req,res)=>{
 
 const actualizarPerfil = async (req,res)=>{
 
-    try {
-        const {id} = req.params
-        const {nombre,apellido,cedula,telefono,email} = req.body
+try {
+    const {id} = req.params
+    const {nombre,apellido,cedula,telefono,email} = req.body
 
-        if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(400).json({msg:`ID inválido: ${id}`})
+    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(400).json({msg:`ID inválido: ${id}`})
 
+    const administradorBDD = await Administrator.findById(id)
 
-        const administradorBDD = await Administrator.findById(id)
+    if(!administradorBDD) return res.status(404).json({ msg: `No existe el administrador ${id}` })
+            
+    const identificacion = (cedula ).trim().replace(/[^\d]/g, '');
 
-        if(!administradorBDD) return res.status(404).json({ msg: `No existe el administrador ${id}` })
-
-        if (Object.values(req.body).includes("")) return res.status(400).json({msg:"Debes llenar todos los campos"})
-        
-        // validando el campo telefono par que tenga 10 numeros
-        if (!/^\d{10}$/.test(telefono)) {
-            return res.status(400).json({ msg: "El número de celular debe tener 10 dígitos" });
-        }
-
-        if (!/^\d{10}$/.test(cedula)) {
-            return res.status(400).json({ msg: "La cedula debe tener 10 dígitos" });
-        }
-        
-        administradorBDD.nombre = nombre ?? administradorBDD.nombre
-        administradorBDD.cedula = cedula ?? administradorBDD.cedula
-        administradorBDD.apellido = apellido ?? administradorBDD.apellido
-        administradorBDD.telefono = telefono ?? administradorBDD.telefono
-        administradorBDD.email = email ?? administradorBDD.email
-
-        // Validar si los datos son los mismos
-        if (
-        administradorBDD.nombre == nombre &&
-        administradorBDD.cedula == cedula &&
-        administradorBDD.apellido == apellido &&
-        administradorBDD.telefono == telefono &&
-        administradorBDD.email == email 
-        ) {
-            return res.status(200).json({ msg: "No se realizaron cambios, los datos son los mismos." });
-        }
-
-
-        await administradorBDD.save()
-        res.status(200).json(administradorBDD)
-        
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    if (!/^\d{10}$/.test(identificacion)) { 
+    return res.status(400).json({ msg: " Ingresa Identificación válida. " });
     }
+
+    const celular = (telefono).trim().replace(/[^\d]/g, '');
+
+    if (!/^0\d{9}$/.test(celular)) { 
+    return res.status(400).json({ msg: " Ingresa número de teléfono válido. " });
+    }
+
+    administradorBDD.nombre = nombre ?? administradorBDD.nombre
+    administradorBDD.apellido = apellido ?? administradorBDD.apellido
+    administradorBDD.cedula = identificacion ?? administradorBDD.cedula 
+    administradorBDD.telefono = celular ?? administradorBDD.telefono 
+    administradorBDD.email = email ?? administradorBDD.email
+
+    await administradorBDD.save()
+    
+    res.status(200).json(administradorBDD)
+
+  } catch (error) {
+  console.error(error)
+  res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+  }
 }
 
 
@@ -136,8 +134,10 @@ const actualizarPassword = async (req,res)=>{
 
 
     const verificarPassword = await administradorBDD.matchPassword(req.body.passwordactual)
+
     if(!verificarPassword) 
       return res.status(404).json({msg:"Lo sentimos, el password actual no es el correcto"})
+
     administradorBDD.password = await administradorBDD.encryptPassword(req.body.passwordnuevo)
 
     await administradorBDD.save()

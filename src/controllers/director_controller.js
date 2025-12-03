@@ -253,8 +253,10 @@ const recuperarPasswordDirector = async (req, res) => {
 
         const directorBDD = await Director.findOne({  emailDirector: email });
         if (!directorBDD) {
-            return res.status(404).json({ msg: "El email no se encuentra registrado" });
+            return res.status(404).json({ msg: "La información proporcionada es incorrecta." });
         }
+
+        
 
         const token = directorBDD.createToken()
         directorBDD.token = token

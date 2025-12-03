@@ -160,7 +160,7 @@ const recuperarPassword = async (req, res) => {
         const administradorBDD = await Administrator.findOne({ email })
 
         if (!administradorBDD) 
-          return res.status(404).json({ msg: "El usuario no se encuentra registrado" })
+          return res.status(404).json({ msg: "La información proporcionada es incorrecta."})
 
         const token = administradorBDD.createToken()
         administradorBDD.token = token

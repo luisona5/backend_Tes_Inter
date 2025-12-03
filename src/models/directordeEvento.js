@@ -31,6 +31,10 @@ const directorSchema = new Schema({
         default:null
 
     },
+    cambioPassword: {
+        type: Boolean,
+        default: true 
+    },
     telefonoDirector:{
         type:String,
         required:true,
@@ -45,9 +49,14 @@ const directorSchema = new Schema({
         type:String,
         default:null
     },
+    
+    cambioPassword: {
+        type: Boolean,
+        default: true
+    },
     rol:{
         type:String,
-        default:"Director_de_evento"
+        default:"Director"
     },
     Administrador:{
         type:mongoose.Schema.Types.ObjectId,
@@ -70,5 +79,10 @@ directorSchema.methods.matchPassword = async function(password){
     return bcrypt.compare(password, this.passwordDirector)
 }
 
+directorSchema.methods.createToken= function(){
+    const tokenGenerado=Math.random().toString(36).slice(2)
+    this.token=tokenGenerado
+    return tokenGenerado
+}
 
 export default model('Director',directorSchema)

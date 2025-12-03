@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken"
 import administrator from "../models/administrator.js"
 import directordeEvento from "../models/directordeEvento.js"
+import estudiante from "../models/student.js"
 
 
 /**
@@ -20,24 +21,37 @@ const verificarTokenJWT = async (req, res, next) => {
     if (!authorization) return res.status(401).json({ msg: "Acceso denegado: token no proporcionado" })
     try {
         const token = authorization.split(" ")[1]
+
         const { id, rol } = jwt.verify(token,process.env.JWT_SECRET)
+
+
+
         if (rol === "Administrador") {
             const administradorBDD = await administrator.findById(id).lean().select("-password")
-            if (!administradorBDD) return res.status(401).json({ msg: "Usuario no encontrado" })
+            if (!administradorBDD) 
+                return res.status(401).json({ msg: "Usuario no encontrado" })
             req.administratorHeader = administradorBDD
             next()
         }
         
-        else{
-            const DirectorBDD = await directordeEvento.findById(id).lean().select("-password")
-            if (!DirectorBDD) return res.status(401).json({ msg: "Usuario no encontrado" })
-            req.directorHeader = DirectorBDD
+        else if (rol === "Director") {
+            const directorBDD = await directordeEvento.findById(id).lean().select("-password")
+            if (!directorBDD) 
+                return res.status(401).json({ msg: "Usuario no encontrado" })
+            req.directorHeader = directorBDD
+            next()
+        }
+        else if (rol === "Estudiante") {
+            const estudianteBDD = await estudiante.findById(id).lean().select("-password")
+            if (!estudianteBDD) 
+                return res.status(401).json({ msg: "Usuario no encontrado" })
+            req.estudianteHeader = estudianteBDD
             next()
         }
     } catch (error) {
         console.log(error)
-        return res.status(401).json({ msg: `Token inválido o expirado - ${error}` })
-    }       
+        return res.status(401).json({ msg: `❌ Token inválido o expirado - ${error}` })
+    }
    
 }
 

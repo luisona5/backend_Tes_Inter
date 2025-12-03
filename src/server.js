@@ -3,6 +3,7 @@ import dotenv from 'dotenv' //  sirve para cargar variables de entorno desde un 
 import cors from 'cors'  // Este middleware permite configurar y manejar el acceso entre dominios diferentes en las solicitudes HTTP.
 import routerAdmin from './routers/Administrator_routes.js'
 import routerDirector from './routers/Director_routes.js'
+import routerEstudiante from './routers/Estudiante_routes.js'
 
 
  const app = express()
@@ -33,6 +34,8 @@ app.get('/',(req,res)=>{
 app.use('/api', routerAdmin)
 
 app.use('/api',routerDirector)
+
+app.use('/api',routerEstudiante)
   
  
  app.use((req,res)=>{res.status(404).send('Endpoint no encontrado')})

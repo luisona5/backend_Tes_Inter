@@ -11,7 +11,7 @@ const router = Router()
 
 router.post('/registro',registro)
 
-router.post('/login',login)
+router.post('/administrador/login',login)
 
 router.get('/perfil',verificarTokenJWT,perfil)
 

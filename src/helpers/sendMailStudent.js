@@ -1,11 +1,11 @@
 import sendMail from "../config/nodemailers.js"
 
-const sendMailToOwner = (userMail, password) => {
 
+const sendMailStudent = (userMail, password) => {
 
     return sendMail(
         userMail,
-        "Bienvenido - Director ",
+        "Bienvenido - Estudiante ",
         `
            <title>Bienvenido a POLISPORT</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +23,7 @@ const sendMailToOwner = (userMail, password) => {
           <tr>
             <td style="padding:0 30px 30px 30px;">
               <p style="margin:0 0 20px 0;font-size:16px;line-height:1.5;">
-                Hola <strong>Director</strong>,
+                Hola <strong>Estudiante</strong>,
               </p>
               <p style="margin:0 0 20px 0;font-size:16px;line-height:1.5;">
                 ¡Bienvenido a <strong>POLISPORT</strong>! 
@@ -69,5 +69,5 @@ const sendMailToOwner = (userMail, password) => {
 
 export {
     
-    sendMailToOwner
+    sendMailStudent
 }

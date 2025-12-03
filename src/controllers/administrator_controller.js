@@ -127,7 +127,7 @@ try {
 
 
 const actualizarPassword = async (req,res)=>{
-
+  try {
     const administradorBDD = await Administrator.findById(req.administratorHeader._id)
     if(!administradorBDD) 
       return res.status(404).json({msg:`Lo sentimos, no existe el administrador ${id}`})
@@ -142,6 +142,11 @@ const actualizarPassword = async (req,res)=>{
 
     await administradorBDD.save()
     res.status(200).json({msg:"Password actualizado correctamente"})
+    
+    } catch (error) {
+    console.error(error)
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
 }
 
 const recuperarPassword = async (req, res) => {
@@ -169,14 +174,16 @@ const recuperarPassword = async (req, res) => {
     }
 }
 
-
+// viene por parte del frontend
 
 const comprobarTokenPasword = async (req,res)=>{
     try {
         const {token} = req.params
         const administradorBDD = await Administrator.findOne({token})
-        if(administradorBDD?.token !== token) return res.status(404).json({msg:"Lo sentimos, no se puede validar la cuenta"})
-        res.status(200).json({msg:"Token confirmado, ya puedes crear tu nuevo password"}) 
+        
+        if(administradorBDD?.token !== token) 
+          return res.status(404).json({msg:"Lo sentimos, no se puede validar la cuenta"})
+        res.status(200).json({msg:"Ya puedes crear tu nuevo password"}) 
     
     } catch (error) {
         console.error(error)

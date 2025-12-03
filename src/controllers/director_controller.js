@@ -1,33 +1,55 @@
 import Director from '../models/directordeEvento.js';
 import { sendMailToOwner } from "../helpers/sendMail.js";
+import { sendMailToRecoveryPassword} from "../helpers/RecoveryPassword.js"
+
+import { crearTokenJWT } from "../middlewares/JWT.js"
+
+import mongoose from 'mongoose';
 
 
 const registrarDirector = async (req, res) => {
   try {
-    const { emailDirector } = req.body;
+    const { emailDirector, cedulaDirector, telefonoDirector } = req.body;
 
     if (Object.values(req.body).includes("")) {
       return res.status(400).json({ msg: "Debes llenar todos los campos" });
     }
 
-    const emailExistente = await Director.findOne({ emailDirector });
+    const datosExistente = await Director.findOne({ $or: [{ emailDirector }, { cedulaDirector }] });
 
-    if (emailExistente) {
-      return res.status(400).json({ msg: "El email ya se encuentra registrado" });
+    if (datosExistente) {
+      return res.status(400).json({ msg: "cedula o email ya se encuentra registrado" });
+    }
+    const identificacionDirector = (cedulaDirector ).trim().replace(/[^\d]/g, '');
+
+    if (!/^\d{10}$/.test(identificacionDirector)) { 
+    return res.status(400).json({ msg: " Ingresa Identificación válida. " });
     }
 
+    const celularDirector = (telefonoDirector).trim().replace(/[^\d]/g, '');
+
+    if (!/^0\d{9}$/.test(celularDirector)) { 
+    return res.status(400).json({ msg: " Ingresa número de teléfono válido. " });
+    }
+    const dominio = "epn.edu.ec";
+        
+        if (!emailDirector.toLowerCase().endsWith(`@${dominio}`)) {
+            return res.status(400).json({msg:`El registro requiere un correo institucional perteneciente a la EPN.`});
+        }
+    
     const password = Math.random().toString(36).toUpperCase().slice(2, 10)
     
     const nuevoDirector = new Director({
       ...req.body,
-            passwordDirector: await Director.prototype.encryptPassword("SPORT"+password+"POLI"),
-            administrator: req.administratorHeader._id            
+            passwordDirector: await Director.prototype.encryptPassword(password),
+            administrator: req.administratorHeader._id,    
+            cambioPassword: true        
     });
 
 
 
     await nuevoDirector.save()
-    await sendMailToOwner(emailDirector,"SPORT"+password+"POLI")
+    await sendMailToOwner(emailDirector, password)
 
     
     return res.status(201).json({ msg: "Registro exitoso del Director de Evento y correo enviado" });
@@ -39,44 +61,6 @@ const registrarDirector = async (req, res) => {
 };
 
 
-const loginDirector = async(req,res)=>{
-
-    try {
-        const {emailDirector,passwordDirector} = req.body
-
-        if (Object.values(req.body).includes("")) 
-          
-          return res.status(404).json({msg:"Debes llenar todos los campos"})
-
-        const DirectorBDD = await Director.findOne({emailDirector}).select("-status -__v -token -updatedAt -createdAt")
-        if(!DirectorBDD) 
-          return res.status(404).json({msg:"Usuario o contraseña es incorrecto"})
-
-        if(!DirectorBDD.emailDirector) 
-          return res.status(403).json({msg:"Usuario o contraseña es incorrecto"})
-
-        const verificarPassword = await DirectorBDD.matchPassword(passwordDirector)
-
-        if(!verificarPassword) 
-          return res.status(401).json({msg:"Usuario o contraseña es incorrecto"})
-
-        
-
-        res.status(200).json({
-            _id,
-            cedulaDirector,
-            nombreDirector,
-            apellidoDirector,
-            telefonoDirector, 
-            emailDirector:DirectorBDD.email,
-            
-        })
-
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
-    }
-}
 
 const listarDirector = async (req,res)=>{
     try {
@@ -93,5 +77,308 @@ const listarDirector = async (req,res)=>{
 
 
 
+const detalleDirector = async(req,res)=>{
 
-export { registrarDirector,loginDirector,listarDirector };
+    try {
+        const {id} = req.params
+
+        if( !mongoose.Types.ObjectId.isValid(id) ) 
+          return res.status(404).json({msg:`No existe el administrador ${id}`});
+
+        const director = await Director.findById(id).select("-createdAt -updatedAt -__v").populate('Administrador','_id nombre apellido')
+        res.status(200).json(director)
+        
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
+}
+
+const eliminarDirector = async (req,res)=>{
+
+    try {
+        const {id} = req.params
+        if( !mongoose.Types.ObjectId.isValid(id) ) 
+          return res.status(404).json({msg:`No existe el Director de Evento ${id}`})
+        await Director.findByIdAndUpdate(id,{estadoDirector:false})
+        res.status(200).json({msg:"Director de Evento eliminado exitosamente"})
+
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
+}
+
+
+
+/*
+const eliminarDirector = async (req,res)=>{
+
+    try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(404).json({ msg: `No existe el Director ${id}` });
+
+    await Director.findByIdAndDelete({_id: id});
+    res.status(200).json({ msg: "Director Eliminado de manera exitosa de la base de datos" });
+    console.log(`eliminado ${id}`)
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: `Error en el servidor - ${error}` });
+  }
+}
+*/
+const actualizarDirector = async(req,res)=>{
+    const {id} = req.params
+    if (Object.values(req.body).includes("")) 
+      return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
+
+    if( !mongoose.Types.ObjectId.isValid(id) ) 
+      return res.status(404).json({msg:`Lo sentimos, no existe el Administrador ${id}`})
+    
+    await Director.findByIdAndUpdate(id, req.body, { new: true })
+    res.status(200).json({msg:"Actualización exitosa del Director de Evento"})
+}
+
+
+const perfilDirector = (req, res) => {
+
+    try {
+        const{_id, nombreDirector,apellidoDirector,cedulaDirector,emailDirector,telefonoDirector,rol} = req.directorHeader
+
+        res.status(200).json({
+            rol,
+            _id,
+            nombreDirector,
+            apellidoDirector,
+            cedulaDirector,
+            emailDirector,
+            telefonoDirector,
+        })
+
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
+}
+
+
+
+const loginDirector = async(req,res)=>{
+
+    try {
+        const {email:emailDirector,password:passwordDirector} = req.body
+        if (Object.values(req.body).includes("")) 
+          return res.status(404).json({msg:"Debes llenar todos los campos"})
+
+        const directorBDD = await Director.findOne({emailDirector})
+
+        if(!directorBDD)
+           return res.status(404).json({msg:"El propietario no se encuentra registrado"})
+
+        const verificarPassword = await directorBDD.matchPassword(passwordDirector)
+
+        if(!verificarPassword) 
+          return res.status(404).json({msg:"Usuario o contraseña incorrecta"})
+        const token = crearTokenJWT(directorBDD._id,directorBDD.rol)
+
+        const {_id,rol,cambioPassword} = directorBDD
+
+      
+        res.status(200).json({
+            rol,
+            _id,
+            token,
+            requirePasswordChange: cambioPassword || false
+
+        })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
+}
+
+const cambiarPasswordDirector = async (req, res) => {
+    try {
+        const { passwordActual, passwordNuevo } = req.body;
+        
+        if (Object.values(req.body).includes("")) {
+            return res.status(400).json({ msg: "Debes llenar todos los campos" });
+        }
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+        
+        if (!passwordRegex.test(passwordNuevo)) {
+            return res.status(404).json({
+                msg: "La nueva contraseña no cumple con los requisitos de seguridad.",
+                details: "Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y caracteres especiales "
+            });
+        }
+
+        const directorBDD = await Director.findById(req.directorHeader._id);
+
+        if (!directorBDD) {
+            return res.status(404).json({ msg: "Director no encontrado" });
+        }
+
+        // Verificar contraseña actual
+        const verificarPassword = await directorBDD.matchPassword(passwordActual);
+        
+        if (!verificarPassword) {
+            return res.status(400).json({ msg: "La contraseña actual es incorrecta" });
+        }
+
+        // Encriptar y actualizar nueva contraseña
+        directorBDD.passwordDirector = await directorBDD.encryptPassword(passwordNuevo);
+        directorBDD.cambioPassword = false; // Ya no necesita cambiar contraseña
+        
+        await directorBDD.save();
+
+        res.status(200).json({ msg: "Contraseña actualizada exitosamente" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
+    }
+};
+
+
+const recuperarPasswordDirector = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ msg: "Debes proporcionar un email" });
+        }
+
+        const directorBDD = await Director.findOne({  emailDirector: email });
+        if (!directorBDD) {
+            return res.status(404).json({ msg: "El email no se encuentra registrado" });
+        }
+
+        const token = directorBDD.createToken()
+        directorBDD.token = token
+        await sendMailToRecoveryPassword(email, token)
+        await directorBDD.save()
+        res.status(200).json({ msg: "Revisa tu correo electrónico para reestablecer tu cuenta" })
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
+    }
+};
+
+
+// NUEVO: Confirmar token y establecer nueva contraseña
+const comprobarTokenPasswordDirector = async (req, res) => {
+    
+        try {
+             const {token} = req.params
+                const directorBDD = await Director.findOne({token})
+                
+                if(directorBDD?.token !== token) 
+                  return res.status(404).json({msg:"Lo sentimos, no se puede validar la cuenta"})
+
+                res.status(200).json({msg:"Ya puedes crear tu nuevo password"}) 
+            
+            } catch (error) {
+                console.error(error)
+                res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+            }
+};
+
+
+// NUEVO: Establecer nueva contraseña usando el token
+const nuevoPasswordDirector = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password, confirmpassword } = req.body;
+
+        if (Object.values(req.body).includes("")) {
+            return res.status(404).json({ msg: "Debes llenar todos los campos" });
+        }
+
+        if (password !== confirmpassword) {
+            return res.status(404).json({ msg: "Las contraseñas no coinciden" });
+        }
+
+        if (password.length < 8) {
+            return res.status(404).json({ msg: "La contraseña debe tener al menos 8 caracteres" });
+        }
+
+        const directorBDD = await Director.findOne({ token });
+
+        if (!directorBDD) {
+            return res.status(404).json({ msg: "Token inválido o expirado" });
+        }
+
+        directorBDD.passwordDirector = await directorBDD.encryptPassword(password); 
+        directorBDD.token = null;
+        directorBDD.cambioPassword = false;
+        
+        await directorBDD.save();
+
+        res.status(200).json({ msg: "Contraseña restablecida exitosamente" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
+    }
+};
+
+
+//  Actualizar perfil del director (por sí mismo)
+const actualizarPerfilDirector = async (req,res)=>{
+
+try {
+    const {id} = req.params
+    const {nombreDirector,apellidoDirector,
+          cedulaDirector,telefonoDirector,emailDirector} = req.body
+
+    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(400).json({msg:`ID inválido: ${id}`})
+
+    const directorBDD = await Director.findById(id)
+
+    if(!directorBDD) return res.status(404).json({ msg: `No existe el director ${id}` })
+            
+    const identificacion = (cedulaDirector ).trim().replace(/[^\d]/g, '');
+    if (!/^\d{10}$/.test(identificacion)) { 
+    return res.status(400).json({ msg: " Ingresa Identificación válida. " });
+    }
+
+    const celular = (telefonoDirector).trim().replace(/[^\d]/g, '');
+
+    if (!/^0\d{9}$/.test(celular)) { 
+    return res.status(400).json({ msg: " Ingresa número de teléfono válido. " });
+    }
+
+    directorBDD.nombreDirector = nombreDirector ?? directorBDD.nombreDirector
+    directorBDD.apellidoDirector = apellidoDirector ?? directorBDD.apellidoDirector
+    directorBDD.cedulaDirector = identificacion ?? directorBDD.cedulaDirector 
+    directorBDD.telefonoDirector = celular ?? directorBDD.telefonoDirector 
+    directorBDD.emailDirector = emailDirector ?? directorBDD.emailDirector
+    await directorBDD.save()
+    
+    res.status(200).json(directorBDD)
+
+  } catch (error) {
+  console.error(error)
+  res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+  }
+};
+
+
+export { registrarDirector,
+          loginDirector,
+          listarDirector,
+          detalleDirector,
+          eliminarDirector,
+          actualizarDirector,
+          perfilDirector,
+
+          cambiarPasswordDirector,
+          recuperarPasswordDirector,
+          comprobarTokenPasswordDirector,
+          nuevoPasswordDirector,
+          actualizarPerfilDirector
+        };

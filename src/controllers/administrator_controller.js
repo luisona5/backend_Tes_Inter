@@ -55,7 +55,7 @@ const login = async(req,res)=>{
         const verificarPassword = await AdministradorBDD.matchPassword(password)
 
         if(!verificarPassword) 
-          return res.status(401).json({msg:"Usuario o contraseña es incorrecto"})
+          return res.status(404).json({msg:"Usuario o contraseña es incorrecto"})
 
         const {_id,rol} = AdministradorBDD
         const token = crearTokenJWT(AdministradorBDD._id, AdministradorBDD.rol)

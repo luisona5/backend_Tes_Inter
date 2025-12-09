@@ -1,6 +1,6 @@
 import Director from '../models/directordeEvento.js';
 import { sendMailToOwner } from "../helpers/sendMail.js";
-import { sendMailToRecoveryPassword} from "../helpers/RecoveryPassword.js"
+import { sendMailToRecoveryPasswordDirector} from "../helpers/RecoveryPasswordDirector.js"
 
 import { crearTokenJWT } from "../middlewares/JWT.js"
 
@@ -260,7 +260,7 @@ const recuperarPasswordDirector = async (req, res) => {
 
         const token = directorBDD.createToken()
         directorBDD.token = token
-        await sendMailToRecoveryPassword(email, token)
+        await sendMailToRecoveryPasswordDirector(email, token)
         await directorBDD.save()
         res.status(200).json({ msg: "Revisa tu correo electrónico para reestablecer tu cuenta" })
 
@@ -294,17 +294,17 @@ const comprobarTokenPasswordDirector = async (req, res) => {
 const nuevoPasswordDirector = async (req, res) => {
     try {
         const { token } = req.params;
-        const { password, confirmpassword } = req.body;
+        const { passwordDirector, confirmPasswordDirector } = req.body;
 
         if (Object.values(req.body).includes("")) {
             return res.status(404).json({ msg: "Debes llenar todos los campos" });
         }
 
-        if (password !== confirmpassword) {
+        if (passwordDirector !== confirmPasswordDirector) {
             return res.status(404).json({ msg: "Las contraseñas no coinciden" });
         }
 
-        if (password.length < 8) {
+        if (passwordDirector.length < 8) {
             return res.status(404).json({ msg: "La contraseña debe tener al menos 8 caracteres" });
         }
 
@@ -314,7 +314,7 @@ const nuevoPasswordDirector = async (req, res) => {
             return res.status(404).json({ msg: "Token inválido o expirado" });
         }
 
-        directorBDD.passwordDirector = await directorBDD.encryptPassword(password); 
+        directorBDD.passwordDirector = await directorBDD.encryptPassword(passwordDirector); 
         directorBDD.token = null;
         directorBDD.cambioPassword = false;
         

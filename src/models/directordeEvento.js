@@ -31,10 +31,6 @@ const directorSchema = new Schema({
         default:null
 
     },
-    cambioPassword: {
-        type: Boolean,
-        default: true 
-    },
     telefonoDirector:{
         type:String,
         required:true,
@@ -49,16 +45,16 @@ const directorSchema = new Schema({
         type:String,
         default:null
     },
-    
-    cambioPassword: {
-        type: Boolean,
-        default: true
-    },
+     status: { 
+    type: String, 
+    enum: ['activo', 'inactivo'], 
+    default: 'activo' 
+   },
     rol:{
         type:String,
         default:"Director"
     },
-    Administrador:{
+    administrador:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Administrator'
     }

@@ -13,16 +13,16 @@ router.post('/registro',registro)
 
 router.post('/administrador/login',login)
 
-router.get('/perfil',verificarTokenJWT,perfil)
+router.get('/administrador/perfil',verificarTokenJWT,perfil)
 
-router.put('/actualizarperfil/:id',verificarTokenJWT,actualizarPerfil)
+router.put('/administrador/actualizarperfil/:id',verificarTokenJWT,actualizarPerfil)
 
-router.put('/actualizarpassword/:id',verificarTokenJWT,actualizarPassword)
+router.put('/administrador/actualizarpassword/:id',verificarTokenJWT,actualizarPassword)
 
-router.post('/recuperarpassword',recuperarPassword)
+router.post('/administrador/recuperarpassword',recuperarPassword)
 
-router.get('/recuperarpassword/:token',comprobarTokenPasword)
+router.get('/administrador/recuperarpassword/:token',comprobarTokenPasword)
 
-router.post('/nuevopassword/:token',crearNuevoPassword)
+router.post('administrador/nuevopassword/:token',crearNuevoPassword)
 
 export default router

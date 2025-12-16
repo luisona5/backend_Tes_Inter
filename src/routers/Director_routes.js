@@ -6,8 +6,8 @@ import { registrarDirector,loginDirector,
          recuperarPasswordDirector,
          comprobarTokenPasswordDirector,
          nuevoPasswordDirector,
-         actualizarPerfilDirector,
-         cambiarPasswordDirector} from '../controllers/director_controller.js';
+         actualizarPerfilDirector
+       } from '../controllers/director_controller.js';
 import { verificarTokenJWT } from '../middlewares/JWT.js';
 
 const router = express.Router();
@@ -32,8 +32,6 @@ router.put('/directordeEvento/actualizar/:id',verificarTokenJWT,actualizarDirect
 
 //las rutas controladas por el director de evento
 router.post('/directordeEvento/login',loginDirector)
-
-router.put('/cambiarpassword/:id',verificarTokenJWT,cambiarPasswordDirector)
 
 router.post('/recuperarpasswordDirector',recuperarPasswordDirector)
 

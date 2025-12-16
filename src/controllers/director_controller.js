@@ -42,8 +42,7 @@ const registrarDirector = async (req, res) => {
     const nuevoDirector = new Director({
       ...req.body,
             passwordDirector: await Director.prototype.encryptPassword(password),
-            administrator: req.administratorHeader._id,    
-            cambioPassword: true        
+            administrador: req.administratorHeader?._id || null,
     });
 
 
@@ -66,7 +65,12 @@ const listarDirector = async (req,res)=>{
     try {
         const directores = 
         
-        await Director.find({ estadoDirector: true, administrator: req.administratorHeader._id }).select(" -createdAt -updatedAt -__v").populate('Administrador','_id nombreDirector apellidoDirector')
+        await Director.find({ estadoDirector: true, 
+                              administrator: req.administratorHeader._id 
+            })
+        .select(" -createdAt -updatedAt -__v")
+        .populate('administrador','_id nombreDirector apellidoDirector')
+
         res.status(200).json(directores)
 
     } catch (error) {
@@ -144,7 +148,14 @@ const actualizarDirector = async(req,res)=>{
 const perfilDirector = (req, res) => {
 
     try {
-        const{_id, nombreDirector,apellidoDirector,cedulaDirector,emailDirector,telefonoDirector,rol} = req.directorHeader
+        const{_id, 
+            nombreDirector,
+            apellidoDirector,
+            cedulaDirector,
+            emailDirector,
+            telefonoDirector,
+            rol
+            } = req.directorHeader
 
         res.status(200).json({
             rol,
@@ -182,76 +193,31 @@ const loginDirector = async(req,res)=>{
           return res.status(404).json({msg:"Usuario o contraseña incorrecta"})
         const token = crearTokenJWT(directorBDD._id,directorBDD.rol)
 
-        const {_id,rol,cambioPassword} = directorBDD
+        const {_id,rol} = directorBDD
 
       
         res.status(200).json({
             rol,
             _id,
-            token,
-            requirePasswordChange: cambioPassword || false
-
+            token
         })
+
     } catch (error) {
         console.error(error)
         res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
     }
 }
 
-const cambiarPasswordDirector = async (req, res) => {
-    try {
-        const { passwordActual, passwordNuevo } = req.body;
-        
-        if (Object.values(req.body).includes("")) {
-            return res.status(400).json({ msg: "Debes llenar todos los campos" });
-        }
-
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
-        
-        if (!passwordRegex.test(passwordNuevo)) {
-            return res.status(404).json({
-                msg: "La nueva contraseña no cumple con los requisitos de seguridad.",
-                details: "Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y caracteres especiales "
-            });
-        }
-
-        const directorBDD = await Director.findById(req.directorHeader._id);
-
-        if (!directorBDD) {
-            return res.status(404).json({ msg: "Director no encontrado" });
-        }
-
-        // Verificar contraseña actual
-        const verificarPassword = await directorBDD.matchPassword(passwordActual);
-        
-        if (!verificarPassword) {
-            return res.status(400).json({ msg: "La contraseña actual es incorrecta" });
-        }
-
-        // Encriptar y actualizar nueva contraseña
-        directorBDD.passwordDirector = await directorBDD.encryptPassword(passwordNuevo);
-        directorBDD.cambioPassword = false; // Ya no necesita cambiar contraseña
-        
-        await directorBDD.save();
-
-        res.status(200).json({ msg: "Contraseña actualizada exitosamente" });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
-    }
-};
-
 
 const recuperarPasswordDirector = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email: emailDirector } = req.body;
 
-        if (!email) {
+        if (!emailDirector) {
             return res.status(400).json({ msg: "Debes proporcionar un email" });
         }
 
-        const directorBDD = await Director.findOne({  emailDirector: email });
+        const directorBDD = await Director.findOne({  email: emailDirector });
         if (!directorBDD) {
             return res.status(404).json({ msg: "La información proporcionada es incorrecta." });
         }
@@ -260,7 +226,7 @@ const recuperarPasswordDirector = async (req, res) => {
 
         const token = directorBDD.createToken()
         directorBDD.token = token
-        await sendMailToRecoveryPasswordDirector(email, token)
+        await sendMailToRecoveryPasswordDirector(emailDirector, token)
         await directorBDD.save()
         res.status(200).json({ msg: "Revisa tu correo electrónico para reestablecer tu cuenta" })
 
@@ -271,7 +237,6 @@ const recuperarPasswordDirector = async (req, res) => {
 };
 
 
-// NUEVO: Confirmar token y establecer nueva contraseña
 const comprobarTokenPasswordDirector = async (req, res) => {
     
         try {
@@ -290,22 +255,27 @@ const comprobarTokenPasswordDirector = async (req, res) => {
 };
 
 
-// NUEVO: Establecer nueva contraseña usando el token
 const nuevoPasswordDirector = async (req, res) => {
     try {
         const { token } = req.params;
-        const { passwordDirector, confirmPasswordDirector } = req.body;
+        
+        const { password, confirmpassword } = req.body;
 
-        if (Object.values(req.body).includes("")) {
-            return res.status(404).json({ msg: "Debes llenar todos los campos" });
+        if (!password || !confirmpassword) {
+            return res.status(400).json({ msg: "Debes llenar todos los campos" });
         }
 
-        if (passwordDirector !== confirmPasswordDirector) {
-            return res.status(404).json({ msg: "Las contraseñas no coinciden" });
+        if (password !== confirmpassword) {
+            return res.status(400).json({ msg: "Las contraseñas no coinciden" });
         }
 
-        if (passwordDirector.length < 8) {
-            return res.status(404).json({ msg: "La contraseña debe tener al menos 8 caracteres" });
+        const passwordvalidator = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+        
+        if (!passwordvalidator.test(password)) {
+            return res.status(400).json({
+                msg: "La contraseña no cumple con los requisitos de seguridad",
+                details: "Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números"
+            });
         }
 
         const directorBDD = await Director.findOne({ token });
@@ -314,7 +284,7 @@ const nuevoPasswordDirector = async (req, res) => {
             return res.status(404).json({ msg: "Token inválido o expirado" });
         }
 
-        directorBDD.passwordDirector = await directorBDD.encryptPassword(passwordDirector); 
+        directorBDD.passwordDirector = await directorBDD.encryptPassword(password); 
         directorBDD.token = null;
         directorBDD.cambioPassword = false;
         
@@ -327,6 +297,7 @@ const nuevoPasswordDirector = async (req, res) => {
         res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
     }
 };
+
 
 
 //  Actualizar perfil del director (por sí mismo)
@@ -378,7 +349,6 @@ export { registrarDirector,
           actualizarDirector,
           perfilDirector,
 
-          cambiarPasswordDirector,
           recuperarPasswordDirector,
           comprobarTokenPasswordDirector,
           nuevoPasswordDirector,

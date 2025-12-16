@@ -16,7 +16,7 @@ router.post('/estudiante/registro',verificarTokenJWT,registrarEstudiante);
 
 router.get('/estudiante/visualizarEstudiantes',verificarTokenJWT,listarEstudiante);
 
-router.get('/estudiante/:id',verificarTokenJWT,detalleEstudiante);
+router.get('/estudiante/detalle/:id',verificarTokenJWT,detalleEstudiante);
 
 router.delete('/estudiante/eliminar/:id',verificarTokenJWT,eliminarEstudiante)
 

@@ -34,18 +34,19 @@ const registrarEstudiante = async (req, res) => {
             return res.status(400).json({msg:`El registro requiere un correo institucional perteneciente a la EPN.`});
         }
     
-    const password = Math.random().toString(36).toUpperCase().slice(2, 10)
+    const password = Math.random().toString(36).toUpperCase().slice(2, 15)   //--------------> estan 13 caracteres
     
     const nuevoEstudiante = new Estudiante({
       ...req.body,
-            passwordEstudiante: await Estudiante.prototype.encryptPassword("SPORT"+password),
-            administrator: req.administratorHeader._id            
-    });
+      passwordEstudiante: await Estudiante.prototype.encryptPassword(password),
+      administrador: req.administratorHeader?._id || null,
+      director: req.directorHeader?._id || null
+});
 
 
 
     await nuevoEstudiante.save()
-    await sendMailStudent(emailEstudiante,"SPORT"+password)
+    await sendMailStudent(emailEstudiante,password)
 
     
     return res.status(201).json({ msg: "Registro exitoso del Estudiante y correo enviado" });
@@ -100,7 +101,14 @@ const listarEstudiante = async (req,res)=>{
     try {
         const estudiantes = 
         
-        await Estudiante.find({ estadoEstudiante: true, administrator: req.administratorHeader._id }).select(" -createdAt -updatedAt -__v").populate('Administrador','_id nombreEstudiante apellidoEstudiante')
+        await Estudiante.find({ estadoEstudiante: true,
+                                // esta indicar por separado es decir, indicara solo los usuarios creado por el administrador o director
+                                //administrador: req.administratorHeader?._id,
+                                //director:req.directorHeader?._id,
+                              })
+                              .select(" -createdAt -updatedAt -__v")
+                              .populate('administrador','_id nombre apellido')
+                              .populate('director','_id nombreDirector apellidoDirector')
         res.status(200).json(estudiantes)
 
     } catch (error) {
@@ -119,7 +127,11 @@ const detalleEstudiante = async(req,res)=>{
         if( !mongoose.Types.ObjectId.isValid(id) ) 
           return res.status(404).json({msg:`No existe el administrador ${id}`});
 
-        const estudiante = await Estudiante.findById(id).select("-createdAt -updatedAt -__v").populate('Administrador','_id nombre apellido')
+        const estudiante = await Estudiante.findById(id)
+                                            .select("-createdAt -updatedAt -__v")
+                                            .populate('administrador','_id nombre apellido')
+                                            .populate('director','_id nombreDirector apellidoDirector')
+
         res.status(200).json(estudiante)
         
     } catch (error) {
@@ -205,6 +217,35 @@ const perfilEstudiante = (req, res) => {
         console.error(error)
         res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
     }
+}
+
+
+//------------------------------------------ESTUDIANTE------------------------------------------
+
+
+const registroIndependienteStudent = async (req,res)=>{
+
+    try {
+        const {emailEstudiante,passwordEstudiante} = req.body
+        if (Object.values(req.body).includes("")) 
+          return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
+
+
+        const verificarEmailBDD = await Estudiante.findOne({emailEstudiante})
+        if(verificarEmailBDD) 
+          return res.status(400).json({msg:"Lo sentimos, el email ya se encuentra registrado"})
+
+        const nuevoEstudiante = new Estudiante(req.body)
+        nuevoEstudiante.passwordEstudiante = await nuevoEstudiante.encryptPassword(passwordEstudiante)
+        const token = nuevoEstudiante.createToken()
+        await sendMailToRegisterStudent(email,token)
+        await nuevoEstudiante.save()
+        res.status(200).json({msg:"Revisa tu correo electrónico para confirmar tu cuenta"})
+
+    } catch (error) {
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
+
 }
 
 

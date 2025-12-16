@@ -53,6 +53,10 @@ const EstudianteSchema = new Schema({
     default: 'activo' 
 
 },
+estadoEstudiante:{
+        type:Boolean,
+        default:true
+    },
 token:{
     type:String,
     default:null

@@ -78,7 +78,7 @@ const login = async(req,res)=>{
 
 const perfil =(req,res)=>{
 
-	const {tokem,createdAt,updatedAt,__v,...datosPerfil} = req.administratorHeader
+	const {token,createdAt,updatedAt,__v,...datosPerfil} = req.administratorHeader
 
     res.status(200).json(datosPerfil)
 }

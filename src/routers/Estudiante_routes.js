@@ -2,14 +2,18 @@ import express from 'express';
 import { registrarEstudiante,loginEstudiante,
          listarEstudiante, detalleEstudiante,
          eliminarEstudiante,actualizarEstudiante, 
-         perfilEstudiante} from '../controllers/estudiante_controller.js';
+         perfilEstudiante,
+         registroIndependienteStudent,
+         confirmarMailEstudiante,
+         recuperarPasswordEstudiante,
+         comprobarTokenPasswordEstudiante,
+         nuevoPasswordEstudiante,
+         actualizarPerfilEstudiante} from '../controllers/estudiante_controller.js';
 import { verificarTokenJWT } from '../middlewares/JWT.js';
 
 const router = express.Router();
 
-router.post('/estudiante/login',loginEstudiante)
 
-router.get('/estudiante/perfil',verificarTokenJWT,perfilEstudiante)
     
 
 router.post('/estudiante/registro',verificarTokenJWT,registrarEstudiante);
@@ -22,5 +26,24 @@ router.delete('/estudiante/eliminar/:id',verificarTokenJWT,eliminarEstudiante)
 
 router.put('/estudiante/actualizar/:id',verificarTokenJWT,actualizarEstudiante)
 
+//-------------------------------------------------------------------------------
+
+router.post('/registro/estudiante',registroIndependienteStudent)
+
+router.get('/confirmar/estudiante/:token',confirmarMailEstudiante)
+
+router.post('/estudiante/login',loginEstudiante)
+
+router.get('/estudiante/perfil',verificarTokenJWT,perfilEstudiante)
+
+
+router.post('/recuperarpasswordEstudiante',recuperarPasswordEstudiante)
+
+router.get('/recuperarpasswordEstudiante/:token',comprobarTokenPasswordEstudiante)
+
+router.post('/nuevopasswordEstudiante/:token',nuevoPasswordEstudiante)
+
+router.put('/actualizarperfilEstudiante/:id',verificarTokenJWT,actualizarPerfilEstudiante)
+    
 
 export default router;

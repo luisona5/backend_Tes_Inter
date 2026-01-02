@@ -63,7 +63,6 @@ const login = async(req,res)=>{
         res.status(200).json({
             rol,
             _id,
-            //email:AdministradorBDD.email,
             token
         })
 

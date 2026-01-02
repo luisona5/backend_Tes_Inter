@@ -37,7 +37,7 @@ const registrarDirector = async (req, res) => {
             return res.status(400).json({msg:`El registro requiere un correo institucional perteneciente a la EPN.`});
         }
     
-    const password = Math.random().toString(36).toUpperCase().slice(2, 10)
+    const password = Math.random().toString(36).toUpperCase().slice(2, 15)
     
     const nuevoDirector = new Director({
       ...req.body,
@@ -69,7 +69,7 @@ const listarDirector = async (req,res)=>{
                               administrator: req.administratorHeader._id 
             })
         .select(" -createdAt -updatedAt -__v")
-        .populate('administrador','_id nombreDirector apellidoDirector')
+        .populate('administrador','_id nombre apellido')
 
         res.status(200).json(directores)
 
@@ -87,9 +87,10 @@ const detalleDirector = async(req,res)=>{
         const {id} = req.params
 
         if( !mongoose.Types.ObjectId.isValid(id) ) 
-          return res.status(404).json({msg:`No existe el administrador ${id}`});
+          return res.status(404).json({msg:`No existe el director ${id}`});
 
-        const director = await Director.findById(id).select("-createdAt -updatedAt -__v").populate('Administrador','_id nombre apellido')
+        const director = await Director.findById(id).select("-createdAt -updatedAt -__v")
+                                                    .populate('Administrador','_id nombre apellido')
         res.status(200).json(director)
         
     } catch (error) {
@@ -114,31 +115,13 @@ const eliminarDirector = async (req,res)=>{
 }
 
 
-
-/*
-const eliminarDirector = async (req,res)=>{
-
-    try {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id))
-      return res.status(404).json({ msg: `No existe el Director ${id}` });
-
-    await Director.findByIdAndDelete({_id: id});
-    res.status(200).json({ msg: "Director Eliminado de manera exitosa de la base de datos" });
-    console.log(`eliminado ${id}`)
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: `Error en el servidor - ${error}` });
-  }
-}
-*/
 const actualizarDirector = async(req,res)=>{
     const {id} = req.params
     if (Object.values(req.body).includes("")) 
       return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
 
     if( !mongoose.Types.ObjectId.isValid(id) ) 
-      return res.status(404).json({msg:`Lo sentimos, no existe el Administrador ${id}`})
+      return res.status(404).json({msg:`Lo sentimos, no existe el Director ${id}`})
     
     await Director.findByIdAndUpdate(id, req.body, { new: true })
     res.status(200).json({msg:"Actualización exitosa del Director de Evento"})
@@ -272,9 +255,7 @@ const nuevoPasswordDirector = async (req, res) => {
         const passwordvalidator = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
         
         if (!passwordvalidator.test(password)) {
-            return res.status(400).json({
-                msg: "La contraseña no cumple con los requisitos de seguridad",
-                details: "Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números"
+            return res.status(400).json({msg: "Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números"
             });
         }
 

@@ -23,12 +23,12 @@ const registrarEstudiante = async (req, res) => {
     const identificacionEstudiante = (cedulaEstudiante ).trim().replace(/[^\d]/g, '');
 
     if (!/^\d{10}$/.test(identificacionEstudiante)) { 
-    return res.status(400).json({ msg: " Ingresa Identificación válida. " });
+    return res.status(400).json({ msg: "Ingresa Identificación válida." });
     }
 
     const celularEstudiante = (telefonoEstudiante).trim().replace(/[^\d]/g, '');
     if (!/^0\d{9}$/.test(celularEstudiante)) { 
-    return res.status(400).json({ msg: " Ingresa número de teléfono válido. " });
+    return res.status(400).json({ msg: "Ingresa número de teléfono válido." });
     }
     const dominio = "epn.edu.ec";
         
@@ -40,12 +40,17 @@ const registrarEstudiante = async (req, res) => {
     
     const nuevoEstudiante = new Estudiante({
       ...req.body,
+    
       passwordEstudiante: await Estudiante.prototype.encryptPassword(password),
       administrador: req.administratorHeader?._id || null,
       director: req.directorHeader?._id || null
-});
 
+    });
 
+    if (req.administratorHeader?._id || req.directorHeader?._id) {
+        nuevoEstudiante.token = null; 
+    } 
+    
 
     await nuevoEstudiante.save()
     await sendMailStudent(emailEstudiante,password)
@@ -72,7 +77,7 @@ const listarEstudiante = async (req,res)=>{
         const estudiantes = 
         
         await Estudiante.find({ estadoEstudiante: true,
-                                // esta indicar por separado es decir, indicara solo los usuarios creado por el administrador o director
+                                //indica por separado es decir, indicara solo los usuarios creado por el administrador o director
                                 //administrador: req.administratorHeader?._id,
                                 //director:req.directorHeader?._id,
                               })
@@ -127,23 +132,7 @@ const eliminarEstudiante = async (req,res)=>{
 
 
 
-/*
-const eliminarDirector = async (req,res)=>{
 
-    try {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id))
-      return res.status(404).json({ msg: `No existe el Director ${id}` });
-
-    await Director.findByIdAndDelete({_id: id});
-    res.status(200).json({ msg: "Director Eliminado de manera exitosa de la base de datos" });
-    console.log(`eliminado ${id}`)
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: `Error en el servidor - ${error}` });
-  }
-}
-*/
 const actualizarEstudiante = async(req,res)=>{
     const {id} = req.params
     if (Object.values(req.body).includes("")) 
@@ -338,10 +327,7 @@ const nuevoPasswordEstudiante = async (req, res) => {
         const passwordvalidator = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
         
         if (!passwordvalidator.test(password)) {
-            return res.status(400).json({
-                msg: "La contraseña no cumple con los requisitos de seguridad",
-                details: "Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números"
-            });
+            return res.status(400).json({msg: "Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números"});
         }
 
         const estudianteBDD = await Estudiante.findOne({ token });

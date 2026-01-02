@@ -47,6 +47,12 @@ const EstudianteSchema = new Schema({
     required: true, 
 
 
+},genero: { 
+    type: String,
+    trim:true,
+    required: true, 
+
+
 },status: { 
     type: String, 
     enum: ['activo', 'graduado', 'retirado', 'inactivo'], 

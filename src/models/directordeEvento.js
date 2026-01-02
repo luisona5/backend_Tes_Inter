@@ -58,6 +58,7 @@ const directorSchema = new Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Administrator'
     }
+    
 },{
     timestamps:true
 })

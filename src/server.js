@@ -4,6 +4,11 @@ import cors from 'cors'  // Este middleware permite configurar y manejar el acce
 import routerAdmin from './routers/Administrator_routes.js'
 import routerDirector from './routers/Director_routes.js'
 import routerEstudiante from './routers/Estudiante_routes.js'
+import routerDeporte from './routers/Deporte_routes.js'
+import routerInscripcion from './routers/Inscripcion_routes.js'
+import routerCategoria from './routers/Categoria_routes.js'
+import routerAprobacion from './routers/aprobacion_routes.js'
+import routeruniforme from './routers/uniforme_routes.js'
 
 
  const app = express()
@@ -36,6 +41,17 @@ app.use('/api', routerAdmin)
 app.use('/api',routerDirector)
 
 app.use('/api',routerEstudiante)
+
+app.use('/api',routerDeporte)
+
+app.use('/api',routerInscripcion)
+
+app.use('/api',routerCategoria)
+
+app.use('/api',routerAprobacion)
+
+app.use('/api', routeruniforme)
+
   
  
  app.use((req,res)=>{res.status(404).send('Endpoint no encontrado')})

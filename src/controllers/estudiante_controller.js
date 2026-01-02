@@ -155,7 +155,10 @@ const actualizarEstudiante = async(req,res)=>{
 const registroIndependienteStudent = async (req,res)=>{
 
     try {
-        const {emailEstudiante,passwordEstudiante} = req.body
+        const {emailEstudiante,passwordEstudiante,
+                cedulaEstudiante,telefonoEstudiante,
+                
+            } = req.body
         if (Object.values(req.body).includes("")) 
           return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
         
@@ -163,6 +166,17 @@ const registroIndependienteStudent = async (req,res)=>{
         
         if (!emailEstudiante.toLowerCase().endsWith(`@${dominio}`)) {
             return res.status(400).json({msg:`Requiere de correo institucional perteneciente a la EPN.`});
+        }
+
+        const identificacionEstudiante = (cedulaEstudiante ).trim().replace(/[^\d]/g, '');
+
+        if (!/^\d{10}$/.test(identificacionEstudiante)) { 
+        return res.status(400).json({ msg: "Ingresa Identificación válida." });
+        }
+
+        const celularEstudiante = (telefonoEstudiante).trim().replace(/[^\d]/g, '');
+        if (!/^09\d{8}$/.test(celularEstudiante)) { 
+        return res.status(400).json({ msg: "Ingresa número de teléfono válido." });
         }
 
         const verificarEmailBDD = await Estudiante.findOne({emailEstudiante})
@@ -370,7 +384,7 @@ try {
     const dominio='epn.edu.ec'
 
     if (emailEstudiante && !emailEstudiante.toLowerCase().endsWith(`@${dominio}`)) {
-        return res.status(400).json({msg: `Requiere de correo institucional perteneciente a la EPN.`});
+        return res.status(40).json({msg: `Requiere de correo institucional perteneciente a la EPN.`});
     }
             
     const identificacion = (cedulaEstudiante ).trim().replace(/[^\d]/g, '');

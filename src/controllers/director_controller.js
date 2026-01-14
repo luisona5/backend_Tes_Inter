@@ -1,7 +1,8 @@
 import Director from '../models/directordeEvento.js';
 import { sendMailToOwner } from "../helpers/sendMail.js";
 import { sendMailToRecoveryPasswordDirector} from "../helpers/RecoveryPasswordDirector.js"
-
+import { capitalize } from '../config/formato.js';
+ 
 import { crearTokenJWT } from "../middlewares/JWT.js"
 
 import mongoose from 'mongoose';
@@ -9,7 +10,7 @@ import mongoose from 'mongoose';
 
 const registrarDirector = async (req, res) => {
   try {
-    const { emailDirector, cedulaDirector, telefonoDirector } = req.body;
+    const { emailDirector, cedulaDirector, telefonoDirector, nombreDirector, apellidoDirector,status } = req.body;
 
     if (Object.values(req.body).includes("")) {
       return res.status(400).json({ msg: "Debes llenar todos los campos" });
@@ -28,7 +29,7 @@ const registrarDirector = async (req, res) => {
 
     const celularDirector = (telefonoDirector).trim().replace(/[^\d]/g, '');
 
-    if (!/^0\d{9}$/.test(celularDirector)) { 
+    if (!/^09\d{8}$/.test(celularDirector)) { 
     return res.status(400).json({ msg: " Ingresa número de teléfono válido. " });
     }
     const dominio = "epn.edu.ec";
@@ -36,11 +37,19 @@ const registrarDirector = async (req, res) => {
         if (!emailDirector.toLowerCase().endsWith(`@${dominio}`)) {
             return res.status(400).json({msg:`El registro requiere un correo institucional perteneciente a la EPN.`});
         }
-    
+
+    const formato = {
+      ...req.body,
+      nombreDirector: capitalize(nombreDirector),
+      apellidoDirector: capitalize(apellidoDirector),
+      status:status
+      
+
+    }
     const password = Math.random().toString(36).toUpperCase().slice(2, 15)
     
     const nuevoDirector = new Director({
-      ...req.body,
+      ...formato,
             passwordDirector: await Director.prototype.encryptPassword(password),
             administrador: req.administratorHeader?._id || null,
     });
@@ -90,7 +99,7 @@ const detalleDirector = async(req,res)=>{
           return res.status(404).json({msg:`No existe el director ${id}`});
 
         const director = await Director.findById(id).select("-createdAt -updatedAt -__v")
-                                                    .populate('Administrador','_id nombre apellido')
+                                                    .populate('administrador', '_id nombre apellido')
         res.status(200).json(director)
         
     } catch (error) {
@@ -115,17 +124,54 @@ const eliminarDirector = async (req,res)=>{
 }
 
 
-const actualizarDirector = async(req,res)=>{
-    const {id} = req.params
-    if (Object.values(req.body).includes("")) 
-      return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
+const actualizarDirector = async (req, res) => {
+    try {
+        const { id } = req.params;
 
-    if( !mongoose.Types.ObjectId.isValid(id) ) 
-      return res.status(404).json({msg:`Lo sentimos, no existe el Director ${id}`})
-    
-    await Director.findByIdAndUpdate(id, req.body, { new: true })
-    res.status(200).json({msg:"Actualización exitosa del Director de Evento"})
-}
+        if (Object.values(req.body).includes(""))
+            return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+
+        if (!mongoose.Types.ObjectId.isValid(id))
+            return res.status(404).json({ msg: `Lo sentimos, no existe el Director ${id}` });
+
+        const { nombreDirector, apellidoDirector, 
+                telefonoDirector, status, 
+                cedulaDirector, emailDirector } = req.body;
+
+        const celularDirector = telefonoDirector.trim().replace(/[^\d]/g, '');
+
+        if (!/^09\d{8}$/.test(celularDirector)) { 
+            return res.status(400).json({ msg: "Ingresa número de teléfono válido." });
+        }
+
+        // Preparar datos actualizados
+        const informacionActualizada = {
+            nombreDirector: capitalize(nombreDirector),
+            apellidoDirector: capitalize(apellidoDirector),
+            telefonoDirector: celularDirector, 
+            status,
+            cedulaDirector, 
+            emailDirector
+        };
+        const directorActualizado = await Director.findByIdAndUpdate(
+            id,
+            informacionActualizada,
+            { new: true }
+        );
+
+        if (!directorActualizado) {
+            return res.status(404).json({ msg: "Director no encontrado" });
+        }
+
+        res.status(200).json({ 
+            msg: `Director ${informacionActualizada.nombreDirector} ${informacionActualizada.apellidoDirector} actualizado exitosamente` 
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
+    }
+};
 
 
 const perfilDirector = (req, res) => {
@@ -137,7 +183,8 @@ const perfilDirector = (req, res) => {
             cedulaDirector,
             emailDirector,
             telefonoDirector,
-            rol
+            rol,
+            status
             } = req.directorHeader
 
         res.status(200).json({
@@ -148,6 +195,7 @@ const perfilDirector = (req, res) => {
             cedulaDirector,
             emailDirector,
             telefonoDirector,
+            status
         })
 
     } catch (error) {
@@ -168,7 +216,7 @@ const loginDirector = async(req,res)=>{
         const directorBDD = await Director.findOne({emailDirector})
 
         if(!directorBDD)
-           return res.status(404).json({msg:"El propietario no se encuentra registrado"})
+           return res.status(404).json({msg:"Usuario o contraseña incorrecta"})
 
         const verificarPassword = await directorBDD.matchPassword(passwordDirector)
 
@@ -282,45 +330,71 @@ const nuevoPasswordDirector = async (req, res) => {
 
 
 //  Actualizar perfil del director (por sí mismo)
-const actualizarPerfilDirector = async (req,res)=>{
+const actualizarPerfilDirector = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombreDirector, apellidoDirector, cedulaDirector, telefonoDirector, emailDirector } = req.body;
 
-try {
-    const {id} = req.params
-    const {nombreDirector,apellidoDirector,
-          cedulaDirector,telefonoDirector,emailDirector} = req.body
-
-    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(400).json({msg:`ID inválido: ${id}`})
-
-    const directorBDD = await Director.findById(id)
-
-    if(!directorBDD) return res.status(404).json({ msg: `No existe el director ${id}` })
-            
-    const identificacion = (cedulaDirector ).trim().replace(/[^\d]/g, '');
-    if (!/^\d{10}$/.test(identificacion)) { 
-    return res.status(400).json({ msg: " Ingresa Identificación válida. " });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ msg: `ID inválido: ${id}` });
     }
 
-    const celular = (telefonoDirector).trim().replace(/[^\d]/g, '');
+    const directorBDD = await Director.findById(id);
 
-    if (!/^0\d{9}$/.test(celular)) { 
-    return res.status(400).json({ msg: " Ingresa número de teléfono válido. " });
+    if (!directorBDD) {
+      return res.status(404).json({ msg: `No existe el director ${id}` });
     }
 
-    directorBDD.nombreDirector = nombreDirector ?? directorBDD.nombreDirector
-    directorBDD.apellidoDirector = apellidoDirector ?? directorBDD.apellidoDirector
-    directorBDD.cedulaDirector = identificacion ?? directorBDD.cedulaDirector 
-    directorBDD.telefonoDirector = celular ?? directorBDD.telefonoDirector 
-    directorBDD.emailDirector = emailDirector ?? directorBDD.emailDirector
-    await directorBDD.save()
-    
-    res.status(200).json(directorBDD)
+    // Validar cédula solo si viene en el body
+    if (cedulaDirector) {
+      const identificacion = cedulaDirector.trim().replace(/[^\d]/g, '');
+      if (!/^\d{10}$/.test(identificacion)) {
+        return res.status(400).json({ msg: "Ingresa Identificación válida." });
+      }
+      directorBDD.cedulaDirector = identificacion;
+    }
+
+    // Validar teléfono solo si viene en el body
+    if (telefonoDirector) {
+      const celular = telefonoDirector.trim().replace(/[^\d]/g, '');
+      if (!/^0\d{9}$/.test(celular)) {
+        return res.status(400).json({ msg: "Ingresa número de teléfono válido." });
+      }
+      directorBDD.telefonoDirector = celular;
+    }
+
+    // Actualizar otros campos capitalizando nombres
+    if (nombreDirector) directorBDD.nombreDirector = capitalize(nombreDirector);
+    if (apellidoDirector) directorBDD.apellidoDirector = capitalize(apellidoDirector);
+    if (emailDirector) directorBDD.emailDirector = emailDirector;
+
+    await directorBDD.save();
+
+    res.status(200).json(directorBDD);
 
   } catch (error) {
-  console.error(error)
-  res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    console.error(error);
+    res.status(500).json({ msg: `❌ Error en el servidor - ${error}` });
   }
 };
 
+
+const actualizarPasswordDirector= async (req,res)=>{
+    try {
+        const directorBDD = await Director.findById(req.directorHeader._id)
+        if(!directorBDD) 
+            return res.status(404).json({msg:`Lo sentimos, no existe el Director ${id}`})
+        const verificarPassword = await directorBDD.matchPassword(req.body.passwordactual)
+        if(!verificarPassword) 
+            return res.status(404).json({msg:"Lo sentimos, el password actual no es el correcto"})
+        directorBDD.passwordDirector = await directorBDD.encryptPassword(req.body.passwordnuevo)
+        await directorBDD.save()
+
+        return res.status(200).json({msg:"Password actualizado correctamente"})
+    } catch (error) {
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
+}
 
 export { registrarDirector,
           loginDirector,
@@ -333,5 +407,7 @@ export { registrarDirector,
           recuperarPasswordDirector,
           comprobarTokenPasswordDirector,
           nuevoPasswordDirector,
-          actualizarPerfilDirector
+          actualizarPerfilDirector,
+
+          actualizarPasswordDirector
         };

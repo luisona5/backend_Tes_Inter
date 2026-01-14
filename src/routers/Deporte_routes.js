@@ -9,7 +9,7 @@ import { verificarTokenJWT } from '../middlewares/JWT.js'
 
 const router = Router()
 
-router.get('/categorias', obtenerCategorias);
+router.get('/categorias',verificarTokenJWT, obtenerCategorias);
 
 router.post('/registro/Deporte',verificarTokenJWT,registrarDeporte)
 

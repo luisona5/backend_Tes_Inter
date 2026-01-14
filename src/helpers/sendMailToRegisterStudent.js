@@ -23,7 +23,7 @@ const sendMailToRegisterStudent = (userMail, token) => {
                 <p>Hola 👋</p>
                 <p>Gracias por registrarte en POLISPORT. Para confirmar tu cuenta, por favor haz clic en el siguiente botón:</p>
                 <p style="text-align: center;">
-                  <a href="${process.env.VITE_URL_FRONTEND}confirmar/estudiante/${token}"
+                  <a href="${process.env.VITE_URL_FRONTEND}confirm/registro-estudiante/${token}"
                      style="background-color: #2E86AB; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 5px; display: inline-block; font-size: 16px;">
                     Confirmar mi cuenta
                   </a>

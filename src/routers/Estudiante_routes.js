@@ -8,7 +8,8 @@ import { registrarEstudiante,loginEstudiante,
          recuperarPasswordEstudiante,
          comprobarTokenPasswordEstudiante,
          nuevoPasswordEstudiante,
-         actualizarPerfilEstudiante} from '../controllers/estudiante_controller.js';
+         actualizarPerfilEstudiante,
+         actualizarPasswordEstudiante} from '../controllers/estudiante_controller.js';
 import { verificarTokenJWT } from '../middlewares/JWT.js';
 
 const router = express.Router();
@@ -44,6 +45,7 @@ router.get('/recuperarpasswordEstudiante/:token',comprobarTokenPasswordEstudiant
 router.post('/nuevopasswordEstudiante/:token',nuevoPasswordEstudiante)
 
 router.put('/actualizarperfilEstudiante/:id',verificarTokenJWT,actualizarPerfilEstudiante)
-    
+
+router.put('/actualizarpasswordEstudiante/:id',verificarTokenJWT,actualizarPasswordEstudiante)
 
 export default router;

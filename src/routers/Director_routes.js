@@ -6,7 +6,8 @@ import { registrarDirector,loginDirector,
          recuperarPasswordDirector,
          comprobarTokenPasswordDirector,
          nuevoPasswordDirector,
-         actualizarPerfilDirector
+         actualizarPerfilDirector,
+         actualizarPasswordDirector
        } from '../controllers/director_controller.js';
 import { verificarTokenJWT } from '../middlewares/JWT.js';
 
@@ -22,7 +23,7 @@ router.post('/directordeEvento/registro',verificarTokenJWT,registrarDirector);
 
 router.get('/directordeEvento/visualizarDirectores',verificarTokenJWT,listarDirector);
 
-router.get('/directordeEvento/:id',verificarTokenJWT,detalleDirector);
+router.get('/directordeEvento/detalle/informacion/:id',verificarTokenJWT,detalleDirector);
 
 router.delete('/directordeEvento/eliminar/:id',verificarTokenJWT,eliminarDirector)
 
@@ -41,5 +42,6 @@ router.post('/nuevopasswordDirector/:token',nuevoPasswordDirector)
 
 router.put('/actualizarperfilDirector/:id',verificarTokenJWT,actualizarPerfilDirector)
     
+router.put('/actualizarpasswordDirector/:id',verificarTokenJWT,actualizarPasswordDirector)
 
 export default router;

@@ -2,7 +2,7 @@ import sendMail from "../config/nodemailers.js";
 
 const sendMailToRecoveryPassword = (userMail, token) => {
     
-    const recoveryLink = `${process.env.VITE_URL_FRONTEND}reset/admin/${token}`;
+    const recoveryLink = `${process.env.VITE_URL_FRONTEND}reset/recuperar-password/usuarios/${token}`;
     
     return sendMail(
         userMail,

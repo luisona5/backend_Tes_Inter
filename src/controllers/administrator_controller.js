@@ -1,6 +1,7 @@
 import Administrator from "../models/administrator.js"
 import { crearTokenJWT } from "../middlewares/JWT.js"
 import { sendMailToRecoveryPassword} from "../helpers/RecoveryPassword.js"
+import { capitalize } from "../config/formato.js"
 
 
 import mongoose from "mongoose"
@@ -88,7 +89,7 @@ const actualizarPerfil = async (req,res)=>{
 
 try {
     const {id} = req.params
-    const {nombre,apellido,cedula,telefono,email} = req.body
+    const {nombre,apellido,cedula,telefono,email,status} = req.body
 
     if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(400).json({msg:`ID inválido: ${id}`})
 
@@ -96,27 +97,64 @@ try {
 
     if(!administradorBDD) return res.status(404).json({ msg: `No existe el administrador ${id}` })
             
-    const identificacion = (cedula ).trim().replace(/[^\d]/g, '');
-
-    if (!/^\d{10}$/.test(identificacion)) { 
-    return res.status(400).json({ msg: " Ingresa Identificación válida. " });
-    }
-
-    const celular = (telefono).trim().replace(/[^\d]/g, '');
-
-    if (!/^0\d{9}$/.test(celular)) { 
-    return res.status(400).json({ msg: " Ingresa número de teléfono válido. " });
-    }
-
-    administradorBDD.nombre = nombre ?? administradorBDD.nombre
-    administradorBDD.apellido = apellido ?? administradorBDD.apellido
-    administradorBDD.cedula = identificacion ?? administradorBDD.cedula 
-    administradorBDD.telefono = celular ?? administradorBDD.telefono 
-    administradorBDD.email = email ?? administradorBDD.email
-
-    await administradorBDD.save()
+    // Validar cédula 
+        if (cedula) {
+          const identificacion = cedula.trim().replace(/[^\d]/g, '');
+          if (!/^\d{10}$/.test(identificacion)) {
+            return res.status(400).json({msg: "Ingresa Identificación válida."});
+          }
+          administradorBDD.cedula = identificacion;
+        }
     
-    res.status(200).json(administradorBDD)
+        // Validar teléfono
+        if (telefono) {
+          const celular = telefono.trim().replace(/[^\d]/g, '');
+          if (!/^09\d{8}$/.test(celular)) {
+            return res.status(400).json({msg: "Ingresa número de teléfono válido."});
+          }
+          administradorBDD.telefono = celular;
+        }
+    
+        // Validar nombre 
+        if (nombre ) {
+          const nombreValidado = nombre.trim();
+          
+          if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombreValidado)) {
+            return res.status(400).json({msg: "El nombre solo puede contener letras."});
+          }
+          
+          if (nombreValidado.length < 2) {
+            return res.status(400).json({msg: "El nombre debe tener al menos 2 caracteres."});
+          }
+          
+          administradorBDD.nombre = capitalize(nombreValidado);
+        }
+         const dominio = "epn.edu.ec";
+        
+        if (!email.toLowerCase().endsWith(`@${dominio}`)) {
+            return res.status(403).json({msg:`ingreso con correo institucional EPN`});
+        }
+        // Validar apellido 
+        if (apellido) {
+          const apellidoValidado = apellido.trim();
+          
+          if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(apellidoValidado)) {
+            return res.status(400).json({msg: "El apellido solo puede contener letras."});
+          }
+          
+          if (apellidoValidado.length < 2) {
+            return res.status(400).json({msg: "El apellido debe tener al menos 2 caracteres."});
+          }
+          
+          administradorBDD.apellido = capitalize(apellidoValidado);
+        }
+    
+        // Actualizar otros campos solo si se proporcionan
+        if (email) administradorBDD.email = email;
+        if (status !== undefined) administradorBDD.status = status;
+    
+        await administradorBDD.save()
+        res.status(200).json(administradorBDD)
 
   } catch (error) {
   console.error(error)

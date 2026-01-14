@@ -1,10 +1,19 @@
 import Inscripcion from '../models/inscripcion.js';
 import Sport from '../models/sport.js';
 import Estudiante from '../models/student.js';
-
+import { capitalize } from '../config/formato.js';
 import mongoose from 'mongoose';
 import Uniforme from '../models/uniforme.js';
 
+const obtenerDeporte = async (req, res) => {
+  try {
+    const deporte = await Sport.find({ estadoDeporte: true }); 
+    return res.status(200).json(deporte);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ msg: `❌ Error al obtener categorías - ${error.message}` });
+  }
+};
 
 const registrarInscripcion = async (req, res) => {
   try {
@@ -31,22 +40,22 @@ const registrarInscripcion = async (req, res) => {
     }
 
     if (!/^\d{10}$/.test(cedula)) {
-      return res.status(400).json({ msg: "La cédula debe tener exactamente 10 dígitos" });
+      return res.status(400).json({ msg: "ingresa  cédula válida" });
     }
 
     if (!/^09\d{8}$/.test(telefono)) {
-      return res.status(400).json({  msg: "El teléfono del estudiante debe tener formato válido (ejemplo: 0987654321)" });
+      return res.status(400).json({  msg: "Ingresa un numero de teléfono válido" });
     }
 
     if (!/^09\d{8}$/.test(contactoEmergencia.telefono)) {
       return res.status(400).json({ 
-        msg: "El teléfono de emergencia debe tener formato válido (ejemplo: 0987654321)" 
+        msg: "Ingresa un numero de teléfono válido" 
       });
     }
     const dominio = "epn.edu.ec";
         
         if (!email.toLowerCase().endsWith(`@${dominio}`)) {
-            return res.status(400).json({msg:`la inscripcion requiere de correo institucional.`});
+            return res.status(400).json({msg:`la inscripción requiere de correo institucional.`});
         }
 
     const relacionesPermitidas = ['Padre', 'Madre', 'Hermano/a', 'Tío/a', 'Abuelo/a', 'Otro'];
@@ -56,12 +65,8 @@ const registrarInscripcion = async (req, res) => {
       });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(deporte)) {
-      return res.status(400).json({ msg: "ID de deporte inválido" });
-    }
-
     
-    const deporteExiste = await Sport.findById(deporte).populate('categoria');
+    const deporteExiste = await Sport.findById(deporte).populate('categoria', 'nombre detalle fechaInicio fechaFin horaInicio horaFin' );
     
     if (!deporteExiste) {
       return res.status(404).json({ msg: "El deporte seleccionado no existe" });
@@ -70,6 +75,52 @@ const registrarInscripcion = async (req, res) => {
     if (!deporteExiste.estadoDeporte) {
       return res.status(400).json({ msg: "El deporte no está disponible actualmente" });
     }
+    
+  if (!deporteExiste.fechaInicio || !deporteExiste.fechaFin) {
+    return res.status(400).json({ 
+      msg: "El deporte no tiene fechas de inscripción configuradas" 
+    });
+  }
+
+  const fechaInicioStr = deporteExiste.fechaInicio.toISOString().split('T')[0];
+  const fechaFinStr = deporteExiste.fechaFin.toISOString().split('T')[0];
+
+  const inicioInscripcion = new Date(`${fechaInicioStr}T${deporteExiste.horaInicio || '00:00'}:00.000-05:00`);
+  const finInscripcion = new Date(`${fechaFinStr}T${deporteExiste.horaFin || '23:59'}:00.000-05:00`);
+
+  const ahora = new Date();
+
+  // Validar si las inscripciones aún no han iniciado
+  if (ahora < inicioInscripcion) {
+    const fechaFormateada = inicioInscripcion.toLocaleDateString('es-EC', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Guayaquil'
+    });
+
+    return res.status(400).json({ 
+      msg: `Las inscripciones para este deporte inician el ${fechaFormateada}` 
+    });
+  }
+
+  if (ahora > finInscripcion) {
+    const fechaFormateada = finInscripcion.toLocaleDateString('es-EC', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Guayaquil'
+    });
+
+    return res.status(400).json({ 
+      msg: `Las inscripciones para este deporte cerraron el ${fechaFormateada}` 
+    });
+  }
+
 
     // cupos disponibles
     const inscritosActuales = await Inscripcion.countDocuments({ 
@@ -90,7 +141,7 @@ const registrarInscripcion = async (req, res) => {
     });
 
     if (yaInscrito) {
-      return res.status(400).json({ msg: "Ya existe una inscripción activa con esta cédula para este deporte" });
+      return res.status(400).json({ msg: "Ya existe una inscripción para este deporte" });
     }
 
     let estudianteId = null;
@@ -104,9 +155,15 @@ const registrarInscripcion = async (req, res) => {
         estudianteId = estudianteExistente._id;
       }
     }
+    const formato = {
+      ...req.body,
+      nombre: capitalize(nombre),
+      apellido: capitalize(apellido),
+      direccion: capitalize(direccion),
+    }
 
     const nuevaInscripcion = new Inscripcion({
-      ...req.body,
+      ...formato,
       deporte: deporteExiste._id,
       categoria: deporteExiste.categoria,  
       estudiante: estudianteId, 
@@ -128,6 +185,11 @@ const registrarInscripcion = async (req, res) => {
 
 const listarInscripciones = async (req, res) => {
     try {
+
+      if (!req.estudianteHeader || !req.estudianteHeader._id) {
+            return res.status(401).json({ msg: "Usuario no autenticado" });
+        }
+        
         const inscripciones = 
         
         await Inscripcion.find({ estadoInscripcion: true, 
@@ -155,7 +217,7 @@ const detalleInscripcion = async(req, res) => {
         const inscripcion = await Inscripcion.findById(id)
                                               .select("-createdAt -updatedAt -__v")
                                               .populate('estudiante', '_id nombreEstudiante apellidoEstudiante emailEstudiante cedulaEstudiante')
-                                              .populate('deporte', '_id nombre descripcion')
+                                              .populate('deporte', '_id nombre detalle  fechaInicio horaInicio fechaFin horaFin lugar')
                                               .populate('categoria', '_id nombre descripcion')
 
   
@@ -202,7 +264,7 @@ const eliminarInscripcion = async (req,res)=>{
         if( !mongoose.Types.ObjectId.isValid(id) ) 
           return res.status(404).json({msg:`No existe inscripcion ${id}`})
 
-        await Inscripcion.findByIdAndUpdate(id,{estadoInscripcion:false})
+        await Inscripcion.findByIdAndDelete(id)
         res.status(200).json({msg:"Inscripcion eliminado exitosamente"})
 
     } catch (error) {
@@ -217,6 +279,7 @@ export {
     registrarInscripcion,
     listarInscripciones,
     detalleInscripcion,
-    eliminarInscripcion
+    eliminarInscripcion,
+    obtenerDeporte
     
 }

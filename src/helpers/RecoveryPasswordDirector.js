@@ -2,13 +2,12 @@ import sendMail from "../config/nodemailers.js";
 
 const sendMailToRecoveryPasswordDirector = (userMail, token) => {
     
-    const recoveryLink = `${process.env.VITE_URL_FRONTEND}reset/director/${token}`;
-    
+    const recoveryLink = `${process.env.VITE_URL_FRONTEND}reset/recuperar-password/usuarios/${token}`
     return sendMail(
         userMail,
         "Recupera tu contraseña - POLISPORT",
         `
-       
+       hy
 
 
 

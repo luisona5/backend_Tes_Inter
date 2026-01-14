@@ -3,13 +3,15 @@ import {
     registrarInscripcion,
     listarInscripciones,
     detalleInscripcion,
-    eliminarInscripcion 
+    eliminarInscripcion, 
+obtenerDeporte
 } from '../controllers/inscripcion_controller.js';
 
 import { verificarTokenJWT } from '../middlewares/JWT.js';
 
 const router = Router();
 
+router.get('/deporte/disponible',verificarTokenJWT, obtenerDeporte);
 
 router.post('/registro/estudiante/Incripcion', verificarTokenJWT, registrarInscripcion);
 

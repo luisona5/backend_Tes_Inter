@@ -2,6 +2,7 @@ import Estudiante from '../models/student.js';
 import { sendMailStudent } from "../helpers/sendMailStudent.js";
 import {sendMailToRegisterStudent} from "../helpers/sendMailToRegisterStudent.js"
 import { crearTokenJWT } from "../middlewares/JWT.js"
+import { capitalize } from '../config/formato.js';
 
 import mongoose from 'mongoose';
 import { sendMailToRecoveryPasswordEstudiante } from '../helpers/RecoveryPasswordEstudiante.js';
@@ -9,7 +10,9 @@ import { sendMailToRecoveryPasswordEstudiante } from '../helpers/RecoveryPasswor
 
 const registrarEstudiante = async (req, res) => {
   try {
-    const { emailEstudiante, cedulaEstudiante, telefonoEstudiante } = req.body;
+    const { emailEstudiante, cedulaEstudiante, 
+            telefonoEstudiante,direccionEstudiante,
+            nombreEstudiante,apellidoEstudiante,genero,carreraEstudiante,semestre } = req.body;
 
     if (Object.values(req.body).includes("")) {
       return res.status(400).json({ msg: "Debes llenar todos los campos" });
@@ -20,14 +23,18 @@ const registrarEstudiante = async (req, res) => {
     if (datosExistente) {
       return res.status(400).json({ msg: "cedula o email ya se encuentra registrado" });
     }
-    const identificacionEstudiante = (cedulaEstudiante ).trim().replace(/[^\d]/g, '');
+    
+    const identificacionEstudiante = (cedulaEstudiante || '').trim().replace(/[^\d]/g, '');
 
-    if (!/^\d{10}$/.test(identificacionEstudiante)) { 
-    return res.status(400).json({ msg: "Ingresa Identificación válida." });
+    if (!/^\d{10}$/.test(identificacionEstudiante)) {
+        return res.status(400).json({ 
+            msg: "La identificación debe contener exactamente 10 dígitos numéricos." 
+        });
     }
+   
 
     const celularEstudiante = (telefonoEstudiante).trim().replace(/[^\d]/g, '');
-    if (!/^0\d{9}$/.test(celularEstudiante)) { 
+    if (!/^09\d{8}$/.test(celularEstudiante)) { 
     return res.status(400).json({ msg: "Ingresa número de teléfono válido." });
     }
     const dominio = "epn.edu.ec";
@@ -35,20 +42,32 @@ const registrarEstudiante = async (req, res) => {
         if (!emailEstudiante.toLowerCase().endsWith(`@${dominio}`)) {
             return res.status(400).json({msg:`El registro requiere un correo institucional perteneciente a la EPN.`});
         }
-    
-    const password = Math.random().toString(36).toUpperCase().slice(2, 15)   //--------------> estan 13 caracteres
-    
-    const nuevoEstudiante = new Estudiante({
+
+    const formato = {
       ...req.body,
-    
+      nombreEstudiante: capitalize(nombreEstudiante),
+      apellidoEstudiante: capitalize(apellidoEstudiante),
+      direccionEstudiante: capitalize(direccionEstudiante),
+      genero: capitalize(genero),
+      semestre:semestre,
+      carreraEstudiante:carreraEstudiante
+
+    };
+    const password = Math.random().toString(36).toUpperCase().slice(2, 15)   //--------------> estan 13 caracteres
+
+    const nuevoEstudiante = new Estudiante({
+      ...formato,
+
       passwordEstudiante: await Estudiante.prototype.encryptPassword(password),
       administrador: req.administratorHeader?._id || null,
       director: req.directorHeader?._id || null
 
     });
 
+
     if (req.administratorHeader?._id || req.directorHeader?._id) {
-        nuevoEstudiante.token = null; 
+        nuevoEstudiante.token = null;
+        nuevoEstudiante.confirmEmail =true
     } 
     
 
@@ -157,7 +176,9 @@ const registroIndependienteStudent = async (req,res)=>{
     try {
         const {emailEstudiante,passwordEstudiante,
                 cedulaEstudiante,telefonoEstudiante,
-                
+                nombreEstudiante,apellidoEstudiante,
+                direccionEstudiante,genero,semestre
+              
             } = req.body
         if (Object.values(req.body).includes("")) 
           return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
@@ -181,10 +202,21 @@ const registroIndependienteStudent = async (req,res)=>{
 
         const verificarEmailBDD = await Estudiante.findOne({emailEstudiante})
         if(verificarEmailBDD) 
-          return res.status(400).json({msg:"Lo sentimos, el email ya se encuentra registrado"})
+          return res.status(400).json({msg:"Lo sentimos, usuario ya se encuentra registrado"})
 
-        const nuevoEstudiante = new Estudiante(req.body)
+        const formato = {
+        ...req.body,
+        nombreEstudiante: capitalize(nombreEstudiante),
+        apellidoEstudiante: capitalize(apellidoEstudiante),
+        direccionEstudiante: capitalize(direccionEstudiante),
+        semestre: capitalize(semestre),
+        genero: capitalize(genero),
+
+    }
+
+        const nuevoEstudiante = new Estudiante(formato)
         nuevoEstudiante.passwordEstudiante = await nuevoEstudiante.encryptPassword(passwordEstudiante)
+        
         const token = nuevoEstudiante.createToken()
         await sendMailToRegisterStudent(emailEstudiante,token)
         await nuevoEstudiante.save()
@@ -223,8 +255,20 @@ const loginEstudiante = async(req,res)=>{
           return res.status(404).json({msg:"Debes llenar todos los campos"})
 
         const estudianteBDD = await Estudiante.findOne({emailEstudiante})
+                                              .select("-status -__v  -updatedAt -createdAt")
+
         if(!estudianteBDD)
-           return res.status(404).json({msg:"El estudinte no se encuentra registrado"})
+           return res.status(404).json({msg:"Usuario o contraseña incorrecta"})
+
+        const fueCreadoPorAdminODirector = estudianteBDD.administrador || estudianteBDD.director;
+        
+        if (!fueCreadoPorAdminODirector && !estudianteBDD.confirmEmail) {
+            return res.status(403).json({ msg: "Debes verificar tu cuenta antes de iniciar sesión" });
+        }
+
+        if(!estudianteBDD.confirmEmail) 
+          return res.status(403).json({msg:"Debes verificar tu cuenta antes de iniciar sesión"})
+
 
         const verificarPassword = await estudianteBDD.matchPassword(passwordEstudiante)
         if(!verificarPassword) 
@@ -255,6 +299,7 @@ const perfilEstudiante = (req, res) => {
           emailEstudiante,
           direccionEstudiante,
           carreraEstudiante,
+          genero,
           status,
           telefonoEstudiante,rol} = req.estudianteHeader
 
@@ -268,6 +313,7 @@ const perfilEstudiante = (req, res) => {
             telefonoEstudiante,
             direccionEstudiante,
             carreraEstudiante,
+            genero,
             status
         })
 
@@ -338,12 +384,6 @@ const nuevoPasswordEstudiante = async (req, res) => {
             return res.status(400).json({ msg: "Las contraseñas no coinciden" });
         }
 
-        const passwordvalidator = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
-        
-        if (!passwordvalidator.test(password)) {
-            return res.status(400).json({msg: "Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números"});
-        }
-
         const estudianteBDD = await Estudiante.findOne({ token });
 
         if (!estudianteBDD) {
@@ -367,56 +407,112 @@ const nuevoPasswordEstudiante = async (req, res) => {
 
 
 //  Actualizar perfil del estudiante (por sí mismo)
-const actualizarPerfilEstudiante = async (req,res)=>{
+const actualizarPerfilEstudiante = async (req, res) => {
+  try {
+    const {id} = req.params;
+    const {nombreEstudiante, apellidoEstudiante,
+          cedulaEstudiante, telefonoEstudiante,
+          direccionEstudiante, carreraEstudiante,
+          status, emailEstudiante} = req.body;
 
-try {
-    const {id} = req.params
-    const {nombreEstudiante,apellidoEstudiante,
-          cedulaEstudiante,telefonoEstudiante,
-          direccionEstudiante,carreraEstudiante,
-          status, emailEstudiante} = req.body
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({msg: `ID inválido: ${id}`});
+    }
 
-    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(400).json({msg:`ID inválido: ${id}`})
+    const estudianteBDD = await Estudiante.findById(id);
 
-    const estudianteBDD = await Estudiante.findById(id)
+    if (!estudianteBDD) {
+      return res.status(404).json({msg: `No existe el estudiante ${id}`});
+    }
 
-    if(!estudianteBDD) return res.status(404).json({ msg: `No existe el estudiante ${id}` })
-    const dominio='epn.edu.ec'
+    const dominio = 'epn.edu.ec';
 
+    // Validar email 
     if (emailEstudiante && !emailEstudiante.toLowerCase().endsWith(`@${dominio}`)) {
-        return res.status(40).json({msg: `Requiere de correo institucional perteneciente a la EPN.`});
-    }
-            
-    const identificacion = (cedulaEstudiante ).trim().replace(/[^\d]/g, '');
-    if (!/^\d{10}$/.test(identificacion)) { 
-    return res.status(400).json({ msg: " Ingresa Identificación válida. " });
+      return res.status(400).json({msg: `Requiere de correo institucional perteneciente a la EPN.`});
     }
 
-    const celular = (telefonoEstudiante).trim().replace(/[^\d]/g, '');
-
-    if (!/^0\d{9}$/.test(celular)) { 
-    return res.status(400).json({ msg: " Ingresa número de teléfono válido. " });
+    // Validar cédula 
+    if (cedulaEstudiante) {
+      const identificacion = cedulaEstudiante.trim().replace(/[^\d]/g, '');
+      if (!/^\d{10}$/.test(identificacion)) {
+        return res.status(400).json({msg: "Ingresa Identificación válida."});
+      }
+      estudianteBDD.cedulaEstudiante = identificacion;
     }
 
-    estudianteBDD.nombreEstudiante = nombreEstudiante?? estudianteBDD.nombreEstudiante
-    estudianteBDD.apellidoEstudiante = apellidoEstudiante?? estudianteBDD.apellidoEstudiante
-    estudianteBDD.cedulaEstudiante = identificacion ?? estudianteBDD.cedulaEstudiante 
-    estudianteBDD.telefonoEstudiante = celular?? estudianteBDD.telefonoEstudiante 
-    estudianteBDD.emailEstudiante = emailEstudiante?? estudianteBDD.emailEstudiante
-    estudianteBDD.direccionEstudiante= direccionEstudiante?? estudianteBDD.direccionEstudiante
-    estudianteBDD.status= status?? estudianteBDD.status
-    estudianteBDD.carreraEstudiante= carreraEstudiante?? estudianteBDD.carreraEstudiante
-    await estudianteBDD.save()
+    // Validar teléfono
+    if (telefonoEstudiante) {
+      const celular = telefonoEstudiante.trim().replace(/[^\d]/g, '');
+      if (!/^0\d{9}$/.test(celular)) {
+        return res.status(400).json({msg: "Ingresa número de teléfono válido."});
+      }
+      estudianteBDD.telefonoEstudiante = celular;
+    }
+
+    // Validar nombre 
+    if (nombreEstudiante ) {
+      const nombreValidado = nombreEstudiante.trim();
+      
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombreValidado)) {
+        return res.status(400).json({msg: "El nombre solo puede contener letras."});
+      }
+      
+      if (nombreValidado.length < 2) {
+        return res.status(400).json({msg: "El nombre debe tener al menos 2 caracteres."});
+      }
+      
+      estudianteBDD.nombreEstudiante = capitalize(nombreValidado);
+    }
+
+    // Validar apellido 
+    if (apellidoEstudiante) {
+      const apellidoValidado = apellidoEstudiante.trim();
+      
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(apellidoValidado)) {
+        return res.status(400).json({msg: "El apellido solo puede contener letras."});
+      }
+      
+      if (apellidoValidado.length < 2) {
+        return res.status(400).json({msg: "El apellido debe tener al menos 2 caracteres."});
+      }
+      
+      estudianteBDD.apellidoEstudiante = capitalize(apellidoValidado);
+    }
+
+    // Actualizar otros campos solo si se proporcionan
+    if (emailEstudiante) estudianteBDD.emailEstudiante = emailEstudiante;
+    if (direccionEstudiante) estudianteBDD.direccionEstudiante = direccionEstudiante;
+    if (status !== undefined) estudianteBDD.status = status;
+    if (carreraEstudiante) estudianteBDD.carreraEstudiante = carreraEstudiante;
+
+    await estudianteBDD.save();
     
-    res.status(200).json(estudianteBDD)
+    res.status(200).json(estudianteBDD);
 
   } catch (error) {
-  console.error(error)
-  res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    console.error(error);
+    res.status(500).json({msg: `❌ Error en el servidor - ${error.message}`});
   }
 };
 
 
+const actualizarPasswordEstudiante = async (req,res)=>{
+    try {
+        const estudianteBDD = await Estudiante.findById(req.estudianteHeader._id)
+        if(!estudianteBDD) 
+            return res.status(404).json({msg:`Lo sentimos, no existe el estudiante ${id}`})
+        const verificarPassword = await estudianteBDD.matchPassword(req.body.passwordactual)
+        if(!verificarPassword) 
+            return res.status(404).json({msg:"Lo sentimos, el password actual no es el correcto"})
+        estudianteBDD.passwordEstudiante = await estudianteBDD.encryptPassword(req.body.passwordnuevo)
+        await estudianteBDD.save()
+
+        return res.status(200).json({msg:"Password actualizado correctamente"})
+    } catch (error) {
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
+}
 export { registrarEstudiante,
           loginEstudiante,
           listarEstudiante,
@@ -430,5 +526,6 @@ export { registrarEstudiante,
           recuperarPasswordEstudiante,
           comprobarTokenPasswordEstudiante,
           nuevoPasswordEstudiante,
-          actualizarPerfilEstudiante
+          actualizarPerfilEstudiante,
+          actualizarPasswordEstudiante
         };

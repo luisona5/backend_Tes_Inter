@@ -46,8 +46,8 @@ const inscripcionDeporteSchema = new Schema({
         },
         estadoSalud: {
             type: String,
-            default: 'Bueno',
-            trim: true
+            enum: ['Excelente','Bueno', 'Regular', 'Delicado/a'],           
+             trim: true
         },
         medicamentos: {
             type: String,
@@ -87,7 +87,7 @@ const inscripcionDeporteSchema = new Schema({
     },
 
     estudiante: {
-        type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
         ref: 'Estudiante',
     },
     deporte: {
@@ -102,7 +102,12 @@ const inscripcionDeporteSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Uniforme',
     },
-    aprobacion: {
+    director:{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:'Director'
+    
+    
+    },aprobacion: {
         aprobadoPor: {
             type: String,  
             default: null
@@ -110,12 +115,11 @@ const inscripcionDeporteSchema = new Schema({
         fechaAprobacion: Date,
         comentarios: String
     },
-    
-    // ====== DATOS ACTIVOS ======
-    estadoInscripcion: {
+    estadoInscripcion:{
         type: Boolean,
-        default: true
+        default:true
     }
+    
     
 }, {
     timestamps: true

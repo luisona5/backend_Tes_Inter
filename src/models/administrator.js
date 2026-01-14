@@ -33,7 +33,13 @@ const administratorSchema = new Schema({
         type:String,
         required:true
     },
-    status:{
+    status: { 
+    type: String, 
+    enum: ['activo', 'inactivo'], 
+    default: 'activo' 
+   },
+    
+    estadoAdministrador:{
         type:Boolean,
         default:true
     },

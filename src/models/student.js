@@ -25,7 +25,11 @@ const EstudianteSchema = new Schema({
     unique: true, 
     trim:true,
 
-},passwordEstudiante:{
+},confirmEmail:{
+        type:Boolean,
+        default:false
+},
+passwordEstudiante:{
     type:String,
     required:true
 
@@ -43,21 +47,25 @@ const EstudianteSchema = new Schema({
 
 },carreraEstudiante: { 
     type: String,
-    trim:true,
+    enum: ['Electromecánica', 'Redes y Telecomunicaciones', 'Agua y Saneamiento Ambiental', 'Desarrollo de Software'], 
     required: true, 
 
 
 },genero: { 
     type: String,
-    trim:true,
-    required: true, 
-
+    enum: ['Masculino', 'Femenino'], 
+    required: true 
+    
 
 },status: { 
     type: String, 
-    enum: ['activo', 'graduado', 'retirado', 'inactivo'], 
+    enum: ['activo', 'inactivo'], 
     default: 'activo' 
-
+},
+semestre:{
+    type: String, 
+    enum: ['Primer Semestre', 'Segundo Semestre','Tercer Semestre','Cuarto Semestre','Quinto Semestre',], 
+    required:true
 },
 estadoEstudiante:{
         type:Boolean,

@@ -16,7 +16,19 @@ const deporteSchema = new Schema({
         required: true,
         trim: true
     },
-    horario:{
+    fechaInicio:{
+        type: Date,
+        trim: true
+    },
+     fechaFin:{
+        type: Date,
+        trim: true
+    },
+    horaInicio:{
+        type: String,
+        trim: true
+    },
+    horaFin:{
         type: String,
         trim: true
     },

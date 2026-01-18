@@ -7,7 +7,7 @@ import { registrarDirector,loginDirector,
          comprobarTokenPasswordDirector,
          nuevoPasswordDirector,
          actualizarPerfilDirector,
-         actualizarPasswordDirector
+         actualizarPasswordDirector,
        } from '../controllers/director_controller.js';
 import { verificarTokenJWT } from '../middlewares/JWT.js';
 
@@ -43,5 +43,7 @@ router.post('/nuevopasswordDirector/:token',nuevoPasswordDirector)
 router.put('/actualizarperfilDirector/:id',verificarTokenJWT,actualizarPerfilDirector)
     
 router.put('/actualizarpasswordDirector/:id',verificarTokenJWT,actualizarPasswordDirector)
+
+
 
 export default router;

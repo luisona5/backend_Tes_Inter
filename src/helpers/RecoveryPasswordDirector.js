@@ -7,7 +7,7 @@ const sendMailToRecoveryPasswordDirector = (userMail, token) => {
         userMail,
         "Recupera tu contraseña - POLISPORT",
         `
-       hy
+       
 
 
 

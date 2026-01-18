@@ -17,17 +17,16 @@ const uniformeSchema = new Schema({
         required:true,
         enum:['S','M','L','XL','XXL']
     },
-    precio: {
-        type: Number,
-        required: true,
-        min: 1
-    },
     estadoPago: {
         type: String,
         enum: ['Pendiente', 'Pagado'],
         default: 'Pendiente'
     },
-    
+    precioUniforme: {  
+        type: Number,
+        required: true,
+        min: 0
+    },
     inscripcion:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Inscripcion'
@@ -36,6 +35,15 @@ const uniformeSchema = new Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Estudiante'
     },
+    director:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Director'
+    },
+    deporte:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Deporte'
+    }
+    
 
 },{
     timestamps:true

@@ -4,7 +4,9 @@ import {
     listarInscripciones,
     detalleInscripcion,
     eliminarInscripcion, 
-obtenerDeporte
+obtenerDeporte,
+listarInscripcionesDirector,
+
 } from '../controllers/inscripcion_controller.js';
 
 import { verificarTokenJWT } from '../middlewares/JWT.js';
@@ -20,5 +22,8 @@ router.get('/inscripciones/listar', verificarTokenJWT, listarInscripciones);
 router.get('/inscripciones/detalle/:id', verificarTokenJWT, detalleInscripcion);
 
 router.delete('/inscripciones/eliminar/:id', verificarTokenJWT, eliminarInscripcion);
+
+
+router.get('/listado-estados-director', verificarTokenJWT, listarInscripcionesDirector);
 
 export default router;

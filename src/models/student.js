@@ -59,8 +59,8 @@ passwordEstudiante:{
 
 },status: { 
     type: String, 
-    enum: ['activo', 'inactivo'], 
-    default: 'activo' 
+    enum: ['Activo', 'Inactivo'], 
+    default: 'Activo' 
 },
 semestre:{
     type: String, 

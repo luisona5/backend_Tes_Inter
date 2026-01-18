@@ -13,17 +13,14 @@ const recuperarPasswordUniversal = async (req, res) => {
             return res.status(400).json({ msg: "El correo es obligatorio" });
         }
 
-        // Buscar en las 3 tablas
         let usuario = null;
         let tipoUsuario = null;
 
-        // Buscar en Estudiante
         usuario = await Estudiante.findOne({ emailEstudiante: email });
         if (usuario) {
             tipoUsuario = 'estudiante';
         }
 
-        // Buscar en Director
         if (!usuario) {
             usuario = await Director.findOne({ emailDirector: email });
             if (usuario) {
@@ -31,7 +28,6 @@ const recuperarPasswordUniversal = async (req, res) => {
             }
         }
 
-        // Buscar en Administrador
         if (!usuario) {
             usuario = await Administrator.findOne({ email: email });
             if (usuario) {
@@ -45,7 +41,6 @@ const recuperarPasswordUniversal = async (req, res) => {
             });
         }
 
-        // Generar token
         const token = usuario.createToken();
         usuario.token = token;
         await usuario.save();
@@ -64,7 +59,7 @@ const recuperarPasswordUniversal = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error en recuperarPasswordUniversal:", error);
+        console.error( error);
         res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
     }
 };

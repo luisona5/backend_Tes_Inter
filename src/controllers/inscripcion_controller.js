@@ -1,5 +1,7 @@
 import Inscripcion from '../models/inscripcion.js';
 import Sport from '../models/sport.js';
+import Director from '../models/directordeEvento.js';  
+
 import Estudiante from '../models/student.js';
 import { capitalize } from '../config/formato.js';
 import mongoose from 'mongoose';
@@ -197,6 +199,9 @@ const listarInscripciones = async (req, res) => {
             })
         .select(" -createdAt -updatedAt -__v")
         .populate('estudiante','_id nombreEstudiante apellidoEstudiante')
+        .populate('deporte', '_id nombre detalle EntrenamientoDia EntrenamientoHora')
+        .populate('categoria', '_id nombre descripcion')
+
 
         res.status(200).json(inscripciones)
 
@@ -205,6 +210,39 @@ const listarInscripciones = async (req, res) => {
         res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
     }
 }
+
+const listarInscripcionesDirector = async (req, res) => {
+    try {
+        if (!req.directorHeader || !req.directorHeader._id) {
+            return res.status(401).json({ msg: "Usuario no autenticado" });
+        }
+
+        const directorId = req.directorHeader._id;
+
+        
+        const director = await Director.findById(directorId)
+        
+        if (!director) {
+            return res.status(404).json({ msg: "Director no encontrado" });
+        }
+
+        const inscripciones = await Inscripcion.find({ 
+            estadoInscripcion: true,           
+                            
+        })
+        .select("-createdAt -updatedAt -__v")
+        .populate('estudiante', '_id nombreEstudiante apellidoEstudiante emailEstudiante cedulaEstudiante')
+        .populate('deporte', '_id nombre detalle EntrenamientoDia EntrenamientoHora')
+        .populate('categoria', '_id nombre descripcion')
+
+        res.status(200).json(inscripciones);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
+    }
+};
+
 
 const detalleInscripcion = async(req, res) => {
     try {
@@ -217,7 +255,7 @@ const detalleInscripcion = async(req, res) => {
         const inscripcion = await Inscripcion.findById(id)
                                               .select("-createdAt -updatedAt -__v")
                                               .populate('estudiante', '_id nombreEstudiante apellidoEstudiante emailEstudiante cedulaEstudiante')
-                                              .populate('deporte', '_id nombre detalle  fechaInicio horaInicio fechaFin horaFin lugar')
+                                              .populate('deporte', '_id nombre detalle  fechaInicio horaInicio fechaFin horaFin lugar EntrenamientoDia EntrenamientoHora precioUniforme')
                                               .populate('categoria', '_id nombre descripcion')
 
   
@@ -243,7 +281,9 @@ const detalleInscripcion = async(req, res) => {
             fechaInscripcion: inscripcion.fechaInscripcion,
             estadoInscripcion: inscripcion.estadoInscripcion,
             uniforme: uniforme || null,
-            aprobacion: inscripcion.aprobacion
+            aprobacion: inscripcion.aprobacion,
+            
+
         };
 
         res.status(200).json(respuesta);
@@ -255,6 +295,8 @@ const detalleInscripcion = async(req, res) => {
         });
     }
 };
+
+
 
 
 const eliminarInscripcion = async (req,res)=>{
@@ -280,6 +322,7 @@ export {
     listarInscripciones,
     detalleInscripcion,
     eliminarInscripcion,
-    obtenerDeporte
+    obtenerDeporte,
+    listarInscripcionesDirector
     
 }

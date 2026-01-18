@@ -3,7 +3,7 @@ import {
   inscripcionesPendientes,
   aprobarInscripcion,
   rechazarInscripcion,
-  inscripcionesPorDeporte
+  detalleInscripcion
 } from '../controllers/aprobacion_controller.js';
 import { verificarTokenJWT } from '../middlewares/JWT.js';
 
@@ -15,7 +15,8 @@ router.put('/inscripcion/aprobar/:id',verificarTokenJWT, aprobarInscripcion);
 
 router.put('/inscripcion/rechazar/:id', verificarTokenJWT, rechazarInscripcion);
 
-router.get('/deporte/inscripcionesPorDeporte/:id', verificarTokenJWT, inscripcionesPorDeporte);
+router.get('/inscripciones-estudiantes/detalle/:id', verificarTokenJWT, detalleInscripcion);
+
 
 
 

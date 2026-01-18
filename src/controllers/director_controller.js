@@ -6,6 +6,8 @@ import { capitalize } from '../config/formato.js';
 import { crearTokenJWT } from "../middlewares/JWT.js"
 
 import mongoose from 'mongoose';
+import inscripcion from '../models/inscripcion.js';
+
 
 
 const registrarDirector = async (req, res) => {
@@ -409,5 +411,6 @@ export { registrarDirector,
           nuevoPasswordDirector,
           actualizarPerfilDirector,
 
-          actualizarPasswordDirector
+          actualizarPasswordDirector,
+          
         };

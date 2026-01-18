@@ -199,10 +199,12 @@ const registroIndependienteStudent = async (req,res)=>{
         if (!/^09\d{8}$/.test(celularEstudiante)) { 
         return res.status(400).json({ msg: "Ingresa número de teléfono válido." });
         }
+        const datosExistente = await Estudiante.findOne({ $or: [{ emailEstudiante }, { cedulaEstudiante }] });
 
-        const verificarEmailBDD = await Estudiante.findOne({emailEstudiante})
-        if(verificarEmailBDD) 
-          return res.status(400).json({msg:"Lo sentimos, usuario ya se encuentra registrado"})
+        if (datosExistente) {
+          return res.status(400).json({ msg: "cedula o email ya se encuentra registrado" });
+        }
+
 
         const formato = {
         ...req.body,

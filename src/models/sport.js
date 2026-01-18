@@ -40,10 +40,22 @@ const deporteSchema = new Schema({
         type: Number,
         default: 0
     },
-    
+    EntrenamientoDia:{
+        type: Date,
+        trim: true
+    },
+    EntrenamientoHora:{
+        type: String,
+        trim: true
+    },
     estadoDeporte:{
         type: Boolean,
         default: true
+    },
+     precioUniforme: {
+        type: Number,
+        default: 0,
+        required: true
     },
     director:{
             type:mongoose.Schema.Types.ObjectId,
@@ -53,6 +65,7 @@ const deporteSchema = new Schema({
             type:mongoose.Schema.Types.ObjectId,
             ref:'Categoria'
     },
+   
 },{
     timestamps: true
 })

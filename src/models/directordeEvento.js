@@ -45,10 +45,11 @@ const directorSchema = new Schema({
         type:String,
         default:null
     },
+   
      status: { 
     type: String, 
-    enum: ['activo', 'inactivo'], 
-    default: 'activo' 
+    enum: ['Activo', 'Inactivo'], 
+    default: 'Activo' 
    },
     rol:{
         type:String,

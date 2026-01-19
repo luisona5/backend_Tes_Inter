@@ -41,10 +41,9 @@ const login = async (req, res) => {
       return res.status(404).json({ msg: "Debes llenar todos los campos" });
     }
 
-    // validar dominio
     const dominio = "epn.edu.ec";
     if (!email.toLowerCase().endsWith(`@${dominio}`)) {
-      return res.status(403).json({ msg: "Ingreso con correo institucional EPN" });
+      return res.status(404).json({ msg: "Ingreso con correo institucional EPN" });
     }
 
     const AdministradorBDD = await Administrator

@@ -6,6 +6,7 @@ import {
     eliminarInscripcion, 
 obtenerDeporte,
 listarInscripcionesDirector,
+obtenerDeporteHome,
 
 } from '../controllers/inscripcion_controller.js';
 
@@ -25,5 +26,7 @@ router.delete('/inscripciones/eliminar/:id', verificarTokenJWT, eliminarInscripc
 
 
 router.get('/listado-estados-director', verificarTokenJWT, listarInscripcionesDirector);
+
+router.get('/deportehome/disponible', obtenerDeporteHome);
 
 export default router;

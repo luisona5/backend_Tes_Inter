@@ -17,6 +17,18 @@ const obtenerDeporte = async (req, res) => {
   }
 };
 
+
+const obtenerDeporteHome = async (req, res) => {
+  try {
+    const deporte = await Sport.find({ estadoDeporte: true }); 
+    return res.status(200).json(deporte);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ msg: `❌ Error al obtener categorías - ${error.message}` });
+  }
+};
+
+
 const registrarInscripcion = async (req, res) => {
   try {
     const { 
@@ -92,7 +104,6 @@ const registrarInscripcion = async (req, res) => {
 
   const ahora = new Date();
 
-  // Validar si las inscripciones aún no han iniciado
   if (ahora < inicioInscripcion) {
     const fechaFormateada = inicioInscripcion.toLocaleDateString('es-EC', { 
       year: 'numeric', 
@@ -123,7 +134,6 @@ const registrarInscripcion = async (req, res) => {
     });
   }
 
-
     // cupos disponibles
     const inscritosActuales = await Inscripcion.countDocuments({ 
       deporte: deporte, 
@@ -136,16 +146,7 @@ const registrarInscripcion = async (req, res) => {
       });
     }
 
-    const yaInscrito = await Inscripcion.findOne({
-      cedula: cedula,
-      deporte: deporte,
-      estadoInscripcion: true
-    });
-
-    if (yaInscrito) {
-      return res.status(400).json({ msg: "Ya existe una inscripción para este deporte" });
-    }
-
+    // ⭐ OBTENER EL ID DEL ESTUDIANTE PRIMERO
     let estudianteId = null;
     
     if (req.estudianteHeader && req.estudianteHeader._id) {
@@ -157,6 +158,22 @@ const registrarInscripcion = async (req, res) => {
         estudianteId = estudianteExistente._id;
       }
     }
+
+    // ⭐ VALIDACIÓN CORRECTA - Solo validar si el ESTUDIANTE ya está inscrito en este DEPORTE
+    if (estudianteId) {
+      const yaInscrito = await Inscripcion.findOne({
+        estudiante: estudianteId,
+        deporte: deporte,
+        estadoInscripcion: true
+      });
+
+      if (yaInscrito) {
+        return res.status(400).json({ 
+          msg: "Ya tienes una inscripción activa para este deporte" 
+        });
+      }
+    }
+
     const formato = {
       ...req.body,
       nombre: capitalize(nombre),
@@ -177,12 +194,17 @@ const registrarInscripcion = async (req, res) => {
     return res.status(201).json({ msg: "¡Inscripción realizada con éxito!"});
 
   } catch (error) {
-    console.error( error);
+    console.error(error);
+    
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        msg: "Ya tienes una inscripción activa para este deporte" 
+      });
+    }
     
     return res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}`});
   }
-};
-
+}
 
 
 const listarInscripciones = async (req, res) => {
@@ -323,6 +345,7 @@ export {
     detalleInscripcion,
     eliminarInscripcion,
     obtenerDeporte,
-    listarInscripcionesDirector
+    listarInscripcionesDirector,
+    obtenerDeporteHome
     
 }

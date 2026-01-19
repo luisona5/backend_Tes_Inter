@@ -73,11 +73,7 @@ const aprobarInscripcion = async (req, res) => {
       return res.status(400).json({ msg: "Este deporte no tiene director asignado" });
     }
 
-    if (inscripcion.deporte.director.toString() !== directorId.toString()) {
-      return res.status(403).json({ 
-        msg: "No tienes permiso para aprobar esta inscripción. Solo puedes aprobar inscripciones de tus deportes." 
-      });
-    }
+    
 
     if (!inscripcion.deporte.precioUniforme || inscripcion.deporte.precioUniforme <= 0) {
             return res.status(400).json({
@@ -154,11 +150,7 @@ const rechazarInscripcion = async (req, res) => {
       return res.status(400).json({ msg: "Este deporte no tiene director asignado" });
     }
 
-    if (inscripcion.deporte.director.toString() !== directorId.toString()) {
-      return res.status(403).json({ 
-        msg: "No tienes permiso para rechazar esta inscripción. Solo puedes rechazar inscripciones de tus deportes." 
-      });
-    }
+   
 
     if (inscripcion.estado !== 'Pendiente') {
       return res.status(400).json({ 
@@ -188,7 +180,6 @@ const rechazarInscripcion = async (req, res) => {
 };
 
 
-
 const detalleInscripcion = async(req, res) => {
   try {
     const { id } = req.params;
@@ -197,7 +188,8 @@ const detalleInscripcion = async(req, res) => {
       return res.status(401).json({ msg: "Director no identificado" });
     }
 
-    const directorId = req.directorHeader._id;
+    // ⭐ Ya no necesitas guardar el directorId si no lo vas a usar
+    // const directorId = req.directorHeader._id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ msg: `ID de la inscripción inválido` });
@@ -206,21 +198,23 @@ const detalleInscripcion = async(req, res) => {
     const inscripcion = await Inscripcion.findById(id)
       .select("-createdAt -updatedAt -__v")
       .populate('estudiante', '_id nombreEstudiante apellidoEstudiante emailEstudiante cedulaEstudiante')
-      .populate('deporte', '_id nombre detalle fechaInicio horaInicio fechaFin horaFin lugar director EntrenamientoDia EntrenamientoHora')
+      .populate('deporte', '_id nombre detalle fechaInicio horaInicio fechaFin horaFin lugar director EntrenamientoDia EntrenamientoHora precioUniforme')
       .populate('categoria', '_id nombre descripcion');
 
     if (!inscripcion) {
       return res.status(404).json({ msg: "Inscripción no encontrada" });
     }
 
-
+    // ⭐ ELIMINA ESTA VALIDACIÓN - Ahora todos los directores pueden ver todas las inscripciones
+    /*
     if (inscripcion.deporte.director.toString() !== directorId.toString()) {
       return res.status(403).json({ 
         msg: "No tienes permiso para ver esta inscripción. Solo puedes ver inscripciones de tus deportes." 
       });
     }
+    */
 
-        const respuesta = {
+    const respuesta = {
       _id: inscripcion._id,
       cedula: inscripcion.cedula,
       nombre: inscripcion.nombre,
@@ -240,7 +234,8 @@ const detalleInscripcion = async(req, res) => {
         horaFin: inscripcion.deporte.horaFin,
         lugar: inscripcion.deporte.lugar,
         EntrenamientoDia: inscripcion.deporte.EntrenamientoDia,
-        EntrenamientoHora: inscripcion.deporte.EntrenamientoHora
+        EntrenamientoHora: inscripcion.deporte.EntrenamientoHora,
+        precioUniforme: inscripcion.deporte.precioUniforme 
       },
       categoria: inscripcion.categoria,
       estado: inscripcion.estado,

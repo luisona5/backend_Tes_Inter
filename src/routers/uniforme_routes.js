@@ -1,7 +1,7 @@
 import {Router} from 'express'
-import { actualizarPrecioUniforme, eliminarUniforme,
+import {  eliminarUniforme,
         listarUniformeEstudiante,
-        pagarUniforme, 
+        listarUniformeParaDirector,
         registrarUniforme } from '../controllers/uniforme_controller.js'
 import { verificarTokenJWT } from '../middlewares/JWT.js'
 const router = Router()
@@ -13,9 +13,7 @@ router.get('/lista-de-uniforme/listar',verificarTokenJWT,listarUniformeEstudiant
 
 router.delete('/uniforme/eliminar/:id',verificarTokenJWT,eliminarUniforme)
 
-router.post('/uniforme/pago',verificarTokenJWT,pagarUniforme)
-
-router.put('/director/precio-uniforme/:id',verificarTokenJWT, actualizarPrecioUniforme);
+router.get('/lista-de-uniforme/estudiante/:Id', verificarTokenJWT, listarUniformeParaDirector);
 
 
 export default router

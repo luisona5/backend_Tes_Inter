@@ -139,7 +139,6 @@ const listarDeporte = async (req,res)=>{
         const deportes = 
         
         await Sport.find({ estadoDeporte: true, 
-                              director: req.directorHeader._id 
             })
         .select(" -createdAt -updatedAt -__v")
         .populate('director','_id nombreDirector apellidoDirector')

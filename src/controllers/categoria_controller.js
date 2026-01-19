@@ -44,7 +44,6 @@ const listarCategoria = async (req,res)=>{
         const categoria = 
         
         await Categoria.find({ estadoCategoria: true, 
-                              director: req.directorHeader._id 
             })
         .select(" -createdAt -updatedAt -__v")
         .populate('director','_id nombreDirector apellidoDirector')

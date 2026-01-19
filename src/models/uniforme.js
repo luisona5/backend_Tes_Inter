@@ -17,15 +17,13 @@ const uniformeSchema = new Schema({
         required:true,
         enum:['S','M','L','XL','XXL']
     },
-    estadoPago: {
-        type: String,
-        enum: ['Pendiente', 'Pagado'],
-        default: 'Pendiente'
-    },
     precioUniforme: {  
         type: Number,
         required: true,
         min: 0
+    },
+    estadoUniforme:{
+
     },
     inscripcion:{
         type:mongoose.Schema.Types.ObjectId,

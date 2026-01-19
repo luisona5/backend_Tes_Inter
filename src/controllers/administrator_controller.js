@@ -33,47 +33,50 @@ const registro = async (req, res) => {
 
 
 
-const login = async(req,res)=>{
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-    try {
-        const {email,password} = req.body
-
-        if (Object.values(req.body).includes("")) 
-          
-          return res.status(404).json({msg:"Debes llenar todos los campos"})
-        
-        // validando para que ingresen solo usuarios de la poli
-        const dominio = "epn.edu.ec";
-        
-        if (!email.toLowerCase().endsWith(`@${dominio}`)) {
-            return res.status(403).json({msg:`ingreso con correo institucional EPN`});
-        }
-
-        const AdministradorBDD = await Administrator.findOne({email}).select("-status -__v -token -updatedAt -createdAt")
-        if(!AdministradorBDD.email) 
-          return res.status(404).json({msg:"Usuario o contraseña es incorrecto"})
-
-        const verificarPassword = await AdministradorBDD.matchPassword(password)
-
-        if(!verificarPassword) 
-          return res.status(404).json({msg:"Usuario o contraseña es incorrecto"})
-
-        const {_id,rol} = AdministradorBDD
-        const token = crearTokenJWT(AdministradorBDD._id, AdministradorBDD.rol)
-
-        res.status(200).json({
-            rol,
-            _id,
-            token
-        })
-
-        
-
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    if (Object.values(req.body).includes("")) {
+      return res.status(404).json({ msg: "Debes llenar todos los campos" });
     }
-}
+
+    // validar dominio
+    const dominio = "epn.edu.ec";
+    if (!email.toLowerCase().endsWith(`@${dominio}`)) {
+      return res.status(403).json({ msg: "Ingreso con correo institucional EPN" });
+    }
+
+    const AdministradorBDD = await Administrator
+      .findOne({ email })
+      .select("-status -__v -token -updatedAt -createdAt");
+
+    // Aquí validamos que sí exista
+    if (!AdministradorBDD) {
+      return res.status(404).json({ msg: "Usuario o contraseña es incorrecto" });
+    }
+
+    const verificarPassword = await AdministradorBDD.matchPassword(password);
+
+    if (!verificarPassword) {
+      return res.status(404).json({ msg: "Usuario o contraseña es incorrecto" });
+    }
+
+    const { _id, rol } = AdministradorBDD;
+    const token = crearTokenJWT(_id, rol);
+
+    res.status(200).json({
+      rol,
+      _id,
+      token,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: `❌ Error en el servidor - ${error}` });
+  }
+};
+
 
 
 const perfil =(req,res)=>{

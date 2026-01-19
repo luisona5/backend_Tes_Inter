@@ -51,7 +51,6 @@ const login = async (req, res) => {
       .findOne({ email })
       .select("-status -__v -token -updatedAt -createdAt");
 
-    // Aquí validamos que sí exista
     if (!AdministradorBDD) {
       return res.status(404).json({ msg: "Usuario o contraseña es incorrecto" });
     }

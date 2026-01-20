@@ -100,16 +100,29 @@ const eliminarUniforme = async(req,res)=>{
 
 const listarUniformeEstudiante = async (req, res) => {
     try {
-        const { estudianteId } = req.params;
+        // Obtener el ID del estudiante desde el token
+        if (!req.estudianteHeader || !req.estudianteHeader._id) {
+            return res.status(401).json({ msg: "Usuario no autenticado" });
+        }
+
+        const estudianteId = req.estudianteHeader._id;
         
         const uniformes = await Uniforme.find({ 
             estudiante: estudianteId 
         })
         .select("-__v")
         .populate('deporte', 'nombre detalle precioUniforme')
-        .sort({ createdAt: -1 }); 
+        .populate({
+            path: 'inscripcion',
+            select: 'nombre apellido cedula estado',
+            match: { estado: 'Aprobada' } 
+        })
+        .sort({ createdAt: -1 });
 
-        res.status(200).json(uniformes);
+        // Filtrar uniformes que tengan inscripción (puede que algunos no por el match)
+        const uniformesConInscripcion = uniformes.filter(u => u.inscripcion !== null);
+
+        res.status(200).json(uniformesConInscripcion);
     } catch (error) {
         console.error(error);
         res.status(500).json({ msg: "Error al obtener uniformes del estudiante" });
@@ -122,7 +135,7 @@ const listarUniformeParaDirector = async (req, res) => {
         
         
         const uniformes = await Uniforme.find({ estudiante: estudianteId })
-                                       .populate('deporte'); 
+                                       .populate('deporte','nombre detalle precioUniforme'); 
 
         res.status(200).json(uniformes);
     } catch (error) {

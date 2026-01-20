@@ -9,7 +9,7 @@ const router = Router()
 
 router.post('/uniforme/registro',verificarTokenJWT,registrarUniforme)
 
-router.get('/lista-de-uniforme/listar',verificarTokenJWT,listarUniformeEstudiante)
+router.get('/lista-de-uniforme/listar/:id',verificarTokenJWT,listarUniformeEstudiante)
 
 router.delete('/uniforme/eliminar/:id',verificarTokenJWT,eliminarUniforme)
 

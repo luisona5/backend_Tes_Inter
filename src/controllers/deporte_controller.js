@@ -57,11 +57,37 @@ const registrarDeporte = async (req, res) => {
     const diaDate = new Date(y, m - 1, d);
     diaDate.setHours(0, 0, 0, 0);
 
-    const ahora = new Date();
-    ahora.setSeconds(0, 0);
+    // ============================================
+    // ✅ MODIFICACIÓN: RESTAR 5 HORAS AL UTC
+    // ============================================
+    const ahoraUTC = new Date(); // Hora UTC del servidor (Vercel)
+    const ahoraLocal = new Date(ahoraUTC); // Copia para ajustar
     
-    const hoy = new Date();
+    // RESTAR 5 HORAS para Ecuador (GMT-5)
+    // Obtener la hora UTC y restarle 5
+    const horaUTC = ahoraUTC.getUTCHours();
+    const minutosUTC = ahoraUTC.getUTCMinutes();
+    
+    // Calcular nueva hora ajustada (puede dar negativo si UTC < 5)
+    let nuevaHora = horaUTC - 5;
+    
+    // Manejar caso cuando pasa a día anterior (ej: 02:00 UTC = 21:00 Ecuador del día anterior)
+    if (nuevaHora < 0) {
+      nuevaHora += 24;
+      // También deberíamos ajustar la fecha, pero para validación de "hoy" no es crítico
+    }
+    
+    ahoraLocal.setUTCHours(nuevaHora, minutosUTC, 0, 0);
+    
+    // Para "hoy" usamos la fecha local ajustada
+    const hoy = new Date(ahoraLocal);
     hoy.setHours(0, 0, 0, 0);
+    
+    // Para debug (opcional)
+    console.log('DEBUG HORAS:');
+    console.log('UTC:', ahoraUTC.toISOString(), 'Hora UTC:', horaUTC + ':' + minutosUTC);
+    console.log('Ecuador:', ahoraLocal.toString(), 'Hora Ecuador:', nuevaHora + ':' + minutosUTC);
+    // ============================================
 
     // Validaciones de fechas
     if (inicioDate < hoy) {
@@ -99,14 +125,18 @@ const registrarDeporte = async (req, res) => {
 
     const esHoy = inicioDate.getTime() === hoy.getTime();
 
-    const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
+    // ============================================
+    // ✅ USAR HORA LOCAL AJUSTADA (UTC-5)
+    // ============================================
+    const horaActualLocal = ahoraLocal.getHours() * 60 + ahoraLocal.getMinutes();
+    const horaActualStr = `${ahoraLocal.getHours().toString().padStart(2, '0')}:${ahoraLocal.getMinutes().toString().padStart(2, '0')}`;
 
-
-    if (esHoy && minutosInicio < horaActual) {
+    if (esHoy && minutosInicio < horaActualLocal) {
       return res.status(400).json({ 
-        msg: `La hora de inicio (${horaInicio}) debe ser ${ahora.getHours()}:${ahora.getMinutes()} o mayor` 
+        msg: `La hora de inicio debe ser ${horaActualStr} o mayor (hora Ecuador)` 
       });
     }
+    // ============================================
 
     if (!minutosEntrenamiento || minutosEntrenamiento === 0) {
       return res.status(400).json({ 
@@ -230,13 +260,26 @@ const actualizarDeporte = async(req,res)=>{
     const diaDate = new Date(y, m - 1, d);
     diaDate.setHours(0, 0, 0, 0);
 
-    // ✅ Obtener "ahora" sin segundos
-    const ahora = new Date();
-    ahora.setSeconds(0, 0);
+    // ============================================
+    // ✅ MODIFICACIÓN: RESTAR 5 HORAS AL UTC
+    // ============================================
+    const ahoraUTC = new Date();
+    const ahoraLocal = new Date(ahoraUTC);
     
-    // ✅ Obtener "hoy" sin horas
-    const hoy = new Date();
+    // RESTAR 5 HORAS para Ecuador (GMT-5)
+    const horaUTC = ahoraUTC.getUTCHours();
+    const minutosUTC = ahoraUTC.getUTCMinutes();
+    
+    let nuevaHora = horaUTC - 5;
+    if (nuevaHora < 0) {
+      nuevaHora += 24;
+    }
+    
+    ahoraLocal.setUTCHours(nuevaHora, minutosUTC, 0, 0);
+    
+    const hoy = new Date(ahoraLocal);
     hoy.setHours(0, 0, 0, 0);
+    // ============================================
 
     if (inicioDate < hoy) {
       return res.status(400).json({ msg: "La fecha de inicio debe ser hoy o una fecha futura" });
@@ -272,17 +315,21 @@ const actualizarDeporte = async(req,res)=>{
       });
     }
 
-    // ✅ Hora actual en minutos (sin segundos)
-    const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
+    // ============================================
+    // ✅ USAR HORA LOCAL AJUSTADA (UTC-5)
+    // ============================================
+    const horaActualLocal = ahoraLocal.getHours() * 60 + ahoraLocal.getMinutes();
+    const horaActualStr = `${ahoraLocal.getHours().toString().padStart(2, '0')}:${ahoraLocal.getMinutes().toString().padStart(2, '0')}`;
 
     // ✅ Verificar si la fecha de inicio es HOY
     const esHoy = inicioDate.getTime() === hoy.getTime();
 
-    if (esHoy && minutosInicio <= horaActual) {
+    if (esHoy && minutosInicio < horaActualLocal) {
       return res.status(400).json({ 
-        msg: "La hora de inicio debe ser mayor a la hora actual" 
+        msg: `La hora de inicio debe ser ${horaActualStr} o mayor (hora Ecuador)` 
       });
     }
+    // ============================================
 
     if (!minutosEntrenamiento || minutosEntrenamiento === 0) {
       return res.status(400).json({  
@@ -291,7 +338,7 @@ const actualizarDeporte = async(req,res)=>{
     }
 
     if (precioUniforme !== undefined && precioUniforme < 0) {
-      return res.status(400).json({ 
+      return res.status(500).json({ 
         msg: "El precio del uniforme debe ser mayor o igual a 0"
       });
     }

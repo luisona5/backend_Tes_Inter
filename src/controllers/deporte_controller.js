@@ -97,13 +97,14 @@ const registrarDeporte = async (req, res) => {
       });
     }
 
-    const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
-
     const esHoy = inicioDate.getTime() === hoy.getTime();
 
-    if (esHoy && minutosInicio <= horaActual) {
+    const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
+
+
+    if (esHoy && minutosInicio < horaActual) {
       return res.status(400).json({ 
-        msg: "La hora de inicio debe ser mayor a la hora actual" 
+        msg: "La hora de inicio debe ser mayor o igual a la hora actual" 
       });
     }
 

@@ -1,4 +1,3 @@
-process.env.TZ = process.env.TIMEZONE || 'America/Guayaquil';
 import express from 'express' // facilita crear servidores web, APIs, manejar rutas, middlewares, etc.
 import dotenv from 'dotenv' //  sirve para cargar variables de entorno desde un archivo .env en process.env. 
 import cors from 'cors'  // Este middleware permite configurar y manejar el acceso entre dominios diferentes en las solicitudes HTTP.

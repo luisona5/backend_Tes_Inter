@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "env": {
-    "TIMEZONE ": "America/Guayaquil"
-  },
   "builds": [
     {
       "src": "src/index.js",

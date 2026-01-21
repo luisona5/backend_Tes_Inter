@@ -85,6 +85,7 @@ const registrarDeporte = async (req, res) => {
       return res.status(400).json({ msg: "La fecha de Entrenamiento debe ser mayor que la fecha fin" });
     }
 
+    // Parsear horas a minutos
     const [hiH, hiM] = horaInicio.split(":").map(Number);
     const [hfH, hfM] = horaFin.split(":").map(Number);
     const [hH, hM] = EntrenamientoHora.split(":").map(Number);
@@ -93,6 +94,7 @@ const registrarDeporte = async (req, res) => {
     const minutosFin = hfH * 60 + hfM;
     const minutosEntrenamiento = hH * 60 + hM;
 
+    // Validar si las fechas de inicio y fin son el mismo día
     const mismaFecha = inicioDateSinHora.getTime() === finDateSinHora.getTime();
     
     if (mismaFecha && minutosFin <= minutosInicio) {
@@ -101,8 +103,11 @@ const registrarDeporte = async (req, res) => {
       });
     }
 
+    // ⭐ AQUÍ ESTÁ EL CAMBIO: Hora actual sin segundos
     const ahora = new Date();
+    ahora.setSeconds(0, 0);  // Resetea segundos y milisegundos
     const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
+    
     const esHoy = inicioDateSinHora.getTime() === hoy.getTime();
 
     if (esHoy && minutosInicio <= horaActual) {

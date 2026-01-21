@@ -1,4 +1,4 @@
-process.env.TZ = 'America/Guayaquil';
+process.env.TIMEZONE  = 'America/Guayaquil';
 import express from 'express';
 
 import app from './server.js'

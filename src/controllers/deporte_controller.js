@@ -104,7 +104,7 @@ const registrarDeporte = async (req, res) => {
 
     if (esHoy && minutosInicio < horaActual) {
       return res.status(400).json({ 
-        msg: "La hora de inicio debe ser mayor o igual a la hora actual" 
+        msg: `La hora de inicio (${horaInicio}) debe ser ${ahora.getHours()}:${ahora.getMinutes()} o mayor` 
       });
     }
 

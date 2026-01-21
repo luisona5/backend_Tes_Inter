@@ -41,47 +41,42 @@ const registrarDeporte = async (req, res) => {
       return res.status(400).json({ msg: "El precio del uniforme debe ser mayor o igual a 0"});
     }
 
-    // Validar que no falten valores
     if (!fechaInicio || !fechaFin || !horaInicio || !horaFin || !EntrenamientoDia || !EntrenamientoHora) {
       return res.status(400).json({ msg: "Faltan fechas u horas" });
     }
 
-    // Parsear fechas
     const [yi, mi, di] = fechaInicio.split("-");
     const inicioDate = new Date(yi, mi - 1, di);
+    inicioDate.setHours(0, 0, 0, 0);
     
     const [yf, mf, df] = fechaFin.split("-");
     const finDate = new Date(yf, mf - 1, df);
+    finDate.setHours(0, 0, 0, 0);
 
     const [y, m, d] = EntrenamientoDia.split("-");
     const diaDate = new Date(y, m - 1, d);
+    diaDate.setHours(0, 0, 0, 0);
 
+    const ahora = new Date();
+    ahora.setSeconds(0, 0);
+    
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    // Copiar las fechas para comparación sin horas
-    const inicioDateSinHora = new Date(inicioDate);
-    inicioDateSinHora.setHours(0, 0, 0, 0);
-    
-    const finDateSinHora = new Date(finDate);
-    finDateSinHora.setHours(0, 0, 0, 0);
-    
-    const diaDateSinHora = new Date(diaDate);
-    diaDateSinHora.setHours(0, 0, 0, 0);
-
-    if (inicioDateSinHora < hoy) {
+    // Validaciones de fechas
+    if (inicioDate < hoy) {
       return res.status(400).json({ msg: "La fecha de inicio debe ser hoy o una fecha futura" });
     }
 
-    if (finDateSinHora < hoy) {
+    if (finDate < hoy) {
       return res.status(400).json({ msg: "La fecha de fin debe ser hoy o una fecha futura" });
     }
 
-    if (finDateSinHora < inicioDateSinHora) {
+    if (finDate < inicioDate) {
       return res.status(400).json({ msg: "La fecha de fin debe ser igual o mayor que la fecha de inicio" });
     }
 
-    if (diaDateSinHora <= finDateSinHora) {
+    if (diaDate <= finDate) {
       return res.status(400).json({ msg: "La fecha de Entrenamiento debe ser mayor que la fecha fin" });
     }
 
@@ -94,8 +89,7 @@ const registrarDeporte = async (req, res) => {
     const minutosFin = hfH * 60 + hfM;
     const minutosEntrenamiento = hH * 60 + hM;
 
-    // Validar si las fechas de inicio y fin son el mismo día
-    const mismaFecha = inicioDateSinHora.getTime() === finDateSinHora.getTime();
+    const mismaFecha = inicioDate.getTime() === finDate.getTime();
     
     if (mismaFecha && minutosFin <= minutosInicio) {
       return res.status(400).json({ 
@@ -103,12 +97,9 @@ const registrarDeporte = async (req, res) => {
       });
     }
 
-    // ⭐ AQUÍ ESTÁ EL CAMBIO: Hora actual sin segundos
-    const ahora = new Date();
-    ahora.setSeconds(0, 0);  // Resetea segundos y milisegundos
     const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
-    
-    const esHoy = inicioDateSinHora.getTime() === hoy.getTime();
+
+    const esHoy = inicioDate.getTime() === hoy.getTime();
 
     if (esHoy && minutosInicio <= horaActual) {
       return res.status(400).json({ 
@@ -142,6 +133,7 @@ const registrarDeporte = async (req, res) => {
     return res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
   }
 };
+
 
 
 const listarDeporte = async (req,res)=>{
@@ -212,7 +204,7 @@ const eliminarDeporte = async (req, res) => {
 
 const actualizarDeporte = async(req,res)=>{
     const {id} = req.params
-    const { fechaInicio, fechaFin, horaInicio, horaFin,nombre,EntrenamientoDia,EntrenamientoHora, precioUniforme } = req.body;
+    const { fechaInicio, fechaFin, horaInicio, horaFin, nombre, EntrenamientoDia, EntrenamientoHora, precioUniforme } = req.body;
 
     if (Object.values(req.body).includes("")) 
       return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
@@ -224,16 +216,24 @@ const actualizarDeporte = async(req,res)=>{
       return res.status(400).json({ msg: "Faltan fechas u horas" });
     }
 
-     // Parsear fechas
+    // ✅ Parsear fechas correctamente (con reset de horas)
     const [yi, mi, di] = fechaInicio.split("-");
     const inicioDate = new Date(yi, mi - 1, di);
+    inicioDate.setHours(0, 0, 0, 0);
     
     const [yf, mf, df] = fechaFin.split("-");
     const finDate = new Date(yf, mf - 1, df);
+    finDate.setHours(0, 0, 0, 0);
 
     const [y, m, d] = EntrenamientoDia.split("-");
     const diaDate = new Date(y, m - 1, d);
+    diaDate.setHours(0, 0, 0, 0);
 
+    // ✅ Obtener "ahora" sin segundos
+    const ahora = new Date();
+    ahora.setSeconds(0, 0);
+    
+    // ✅ Obtener "hoy" sin horas
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
@@ -249,61 +249,62 @@ const actualizarDeporte = async(req,res)=>{
       return res.status(400).json({ msg: "La fecha de fin debe ser igual o mayor que la fecha de inicio" });
     }
 
-    if (finDate > diaDate) {
+    // ✅ CORREGIDO: Entrenamiento debe ser MAYOR
+    if (diaDate <= finDate) {
       return res.status(400).json({ msg: "La fecha de Entrenamiento debe ser mayor que la fecha fin" });
     }
-
-   
 
     const [hiH, hiM] = horaInicio.split(":").map(Number);
     const [hfH, hfM] = horaFin.split(":").map(Number);
     const [hH, hM] = EntrenamientoHora.split(":").map(Number);
 
-    const ahora = new Date();
-    const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
-
     const minutosInicio = hiH * 60 + hiM;
     const minutosFin = hfH * 60 + hfM;
     const minutosEntrenamiento = hH * 60 + hM;
 
-    const fechaInicioHoy = (fechaInicio === hoy.toISOString().split("T")[0]);
-
-    if (fechaInicioHoy) {
-      if (minutosInicio < horaActual) {
-        return res.status(400).json({ msg: "La hora de inicio debe ser igual o mayor a la hora actual" 
-        });
-      }
+    // ✅ Validar horas solo si es el mismo día
+    const mismaFecha = inicioDate.getTime() === finDate.getTime();
+    
+    if (mismaFecha && minutosFin <= minutosInicio) {
+      return res.status(400).json({ 
+        msg: "La hora de fin debe ser mayor que la hora de inicio" 
+      });
     }
 
-    if (minutosFin <= minutosInicio) {
-      return res.status(400).json({ msg: "La hora de fin debe ser mayor que la hora de inicio" 
+    // ✅ Hora actual en minutos (sin segundos)
+    const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
+
+    // ✅ Verificar si la fecha de inicio es HOY
+    const esHoy = inicioDate.getTime() === hoy.getTime();
+
+    if (esHoy && minutosInicio <= horaActual) {
+      return res.status(400).json({ 
+        msg: "La hora de inicio debe ser mayor a la hora actual" 
       });
     }
 
     if (!minutosEntrenamiento || minutosEntrenamiento === 0) {
-      return res.status(400).json({  msg: "Debe elegir una hora válida para el entrenamiento" 
+      return res.status(400).json({  
+        msg: "Debe elegir una hora válida para el entrenamiento" 
       });
     }
 
     if (precioUniforme !== undefined && precioUniforme < 0) {
-            return res.status(400).json({ msg: "El precio del uniforme debe ser mayor o igual a 0"
-            });
-        }
+      return res.status(400).json({ 
+        msg: "El precio del uniforme debe ser mayor o igual a 0"
+      });
+    }
 
-
-  const datosActuales = {
-    ...req.body,
-    precioUniforme ,
-    nombre: capitalize(nombre)
-
-}
-
+    const datosActuales = {
+      ...req.body,
+      precioUniforme,
+      nombre: capitalize(nombre)
+    }
     
     await Sport.findByIdAndUpdate(id, datosActuales, { new: true })
     res.status(200).json({msg:"Actualización exitosa del Deporte"})
-
-
 }
+
 
 const listarDeportesDisponibles = async (req, res) => {
     try {

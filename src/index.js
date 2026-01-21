@@ -1,3 +1,6 @@
+process.env.TZ = 'America/Guayaquil';
+import express from 'express';
+
 import app from './server.js'
 import  connection  from './database.js';
 

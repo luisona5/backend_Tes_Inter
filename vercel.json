@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "env": {
+    "TZ": "America/Guayaquil"
+  },
   "builds": [
     {
       "src": "src/index.js",

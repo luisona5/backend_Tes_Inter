@@ -62,12 +62,10 @@ const registrarDeporte = async (req, res) => {
         const diaDate = new Date(y, m - 1, d);
         diaDate.setHours(0, 0, 0, 0);
 
-        // --- OBTENCIÓN DE HORA ACTUAL (ECUADOR) ---
         const ahoraEcuador = obtenerFechaEcuador();
         const hoyEcuador = new Date(ahoraEcuador);
         hoyEcuador.setHours(0, 0, 0, 0);
 
-        // --- VALIDACIONES DE FECHAS ---
         if (inicioDate < hoyEcuador) {
             return res.status(400).json({ msg: "La fecha de inicio debe ser hoy o una fecha futura" });
         }
@@ -84,22 +82,19 @@ const registrarDeporte = async (req, res) => {
             return res.status(400).json({ msg: "La fecha de Entrenamiento debe ser mayor que la fecha fin" });
         }
 
-        // --- VALIDACIÓN DE HORA INICIO (IGUAL O POSTERIOR A LA ACTUAL) ---
         const [hiH, hiM] = horaInicio.split(":").map(Number);
         const minutosElegidos = hiH * 60 + hiM;
         const minutosActuales = ahoraEcuador.getHours() * 60 + ahoraEcuador.getMinutes();
 
-        // Solo validamos la hora si el deporte empieza el mismo día de hoy
         if (inicioDate.getTime() === hoyEcuador.getTime()) {
             if (minutosElegidos < minutosActuales) {
                 const horaActualStr = `${ahoraEcuador.getHours().toString().padStart(2, '0')}:${ahoraEcuador.getMinutes().toString().padStart(2, '0')}`;
                 return res.status(400).json({ 
-                    msg: `La hora de inicio (${horaInicio}) ya pasó. Debe ser igual o posterior a la hora actual de Ecuador (${horaActualStr}).` 
+                    msg: `La hora de inicio Debe ser igual o posterior a la hora actual.` 
                 });
             }
         }
 
-        // --- VALIDACIÓN DE HORA FIN (SI ES EL MISMO DÍA) ---
         const [hfH, hfM] = horaFin.split(":").map(Number);
         const minutosFin = hfH * 60 + hfM;
 
@@ -107,7 +102,6 @@ const registrarDeporte = async (req, res) => {
             return res.status(400).json({ msg: "La hora de fin debe ser mayor que la hora de inicio" });
         }
 
-        // --- GUARDADO ---
         const nuevoDeporte = new Sport({
             ...req.body,
             precioUniforme: precioUniforme || 0,
@@ -140,7 +134,6 @@ const actualizarDeporte = async (req, res) => {
         const inicioDate = new Date(yi, mi - 1, di);
         inicioDate.setHours(0, 0, 0, 0);
 
-        // Validación estricta de hora en actualización
         const [hiH, hiM] = horaInicio.split(":").map(Number);
         const minutosElegidos = hiH * 60 + hiM;
         const minutosActuales = ahoraEcuador.getHours() * 60 + ahoraEcuador.getMinutes();
@@ -166,7 +159,6 @@ const actualizarDeporte = async (req, res) => {
     }
 };
 
-// ... (El resto de funciones listarDeporte, detalleDeporte, eliminarDeporte permanecen igual)
 const listarDeporte = async (req,res)=>{
     try {
         const deportes = await Sport.find({ estadoDeporte: true })

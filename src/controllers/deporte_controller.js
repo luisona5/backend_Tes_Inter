@@ -56,15 +56,17 @@ const registrarDeporte = async (req, res) => {
         const hoyEcuador = new Date(ahoraEcuador);
         hoyEcuador.setHours(0, 0, 0, 0);
 
-        // Validaciones de Fecha
-        if (inicioDate < hoyEcuador) return res.status(400).json({ msg: "La fecha de inicio debe ser hoy o futura" });
-        if (finDate < hoyEcuador) return res.status(400).json({ msg: "La fecha de fin debe ser hoy o futura" });
-        if (finDate < inicioDate) return res.status(400).json({ msg: "La fecha de fin debe ser mayor o igual a la de inicio" });
-        if (diaDate <= finDate) return res.status(400).json({ msg: "La fecha de entrenamiento debe ser posterior a la fecha fin" });
+        if (inicioDate < hoyEcuador) 
+          return res.status(400).json({ msg: "La fecha de inicio debe ser hoy o futura" });
+        if (finDate < hoyEcuador) 
+          return res.status(400).json({ msg: "La fecha de fin debe ser hoy o futura" });
+        if (finDate < inicioDate) 
+          return res.status(400).json({ msg: "La fecha de fin debe ser mayor o igual a la de inicio" });
+        if (diaDate <= finDate) 
+          return res.status(400).json({ msg: "La fecha de entrenamiento debe ser posterior a la fecha fin" });
 
-        // --- VALIDACIÓN DE HORA (CORREGIDA) ---
         const [hiH, hiM] = horaInicio.split(":").map(Number);
-        const minutosInicio = hiH * 60 + hiM; // Variable definida correctamente
+        const minutosInicio = hiH * 60 + hiM; 
         const minutosActuales = ahoraEcuador.getHours() * 60 + ahoraEcuador.getMinutes();
 
         if (inicioDate.getTime() === hoyEcuador.getTime() && minutosInicio < minutosActuales) {
@@ -97,41 +99,66 @@ const registrarDeporte = async (req, res) => {
 const actualizarDeporte = async (req, res) => {
     try {
         const { id } = req.params;
-        const { fechaInicio, horaInicio, nombre, precioUniforme } = req.body;
+        const { nombre, categoria, cupo, lugar,
+            fechaInicio, fechaFin, horaInicio, horaFin, 
+            EntrenamientoDia, EntrenamientoHora, precioUniforme } = req.body;
 
-        if (Object.values(req.body).includes("")) 
+        if (Object.values(req.body).includes("")) {
             return res.status(400).json({ msg: "Debes llenar todos los campos" });
+        }
 
-        const ahoraEcuador = obtenerFechaEcuador();
-        const hoyEcuador = new Date(ahoraEcuador);
-        hoyEcuador.setHours(0, 0, 0, 0);
+        if (!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({ msg: "ID no válido" });
 
         const [yi, mi, di] = fechaInicio.split("-");
         const inicioDate = new Date(yi, mi - 1, di);
         inicioDate.setHours(0, 0, 0, 0);
 
+        const [yf, mf, df] = fechaFin.split("-");
+        const finDate = new Date(yf, mf - 1, df);
+        finDate.setHours(0, 0, 0, 0);
+
+        const [y, m, d] = EntrenamientoDia.split("-");
+        const diaDate = new Date(y, m - 1, d);
+        diaDate.setHours(0, 0, 0, 0);
+
+        const ahoraEcuador = obtenerFechaEcuador();
+        const hoyEcuador = new Date(ahoraEcuador);
+        hoyEcuador.setHours(0, 0, 0, 0);
+
+        if (inicioDate < hoyEcuador) return res.status(400).json({ msg: "La fecha de inicio debe ser hoy o futura" });
+        if (finDate < hoyEcuador) return res.status(400).json({ msg: "La fecha de fin debe ser hoy o futura" });
+        if (finDate < inicioDate) return res.status(400).json({ msg: "La fecha de fin debe ser mayor o igual a la de inicio" });
+        if (diaDate <= finDate) return res.status(400).json({ msg: "La fecha de entrenamiento debe ser posterior a la fecha fin" });
+
         const [hiH, hiM] = horaInicio.split(":").map(Number);
-        const minutosElegidos = hiH * 60 + hiM;
+        const minutosInicio = hiH * 60 + hiM;
         const minutosActuales = ahoraEcuador.getHours() * 60 + ahoraEcuador.getMinutes();
 
-        if (inicioDate < hoyEcuador) {
-            return res.status(400).json({ msg: "La fecha de inicio no puede ser menor a la fecha actual" });
+        if (inicioDate.getTime() === hoyEcuador.getTime() && minutosInicio < minutosActuales) {
+            const horaActualStr = `${ahoraEcuador.getHours().toString().padStart(2, '0')}:${ahoraEcuador.getMinutes().toString().padStart(2, '0')}`;
+            return res.status(400).json({ msg: `La hora de inicio  Debe ser igual o posterior a la actual ${horaActualStr}.` });
         }
 
-        if (inicioDate.getTime() === hoyEcuador.getTime() && minutosElegidos < minutosActuales) {
-            return res.status(400).json({ msg: "No puedes actualizar a una hora que ya pasó" });
+        const [hfH, hfM] = horaFin.split(":").map(Number);
+        const minutosFin = hfH * 60 + hfM;
+        if (inicioDate.getTime() === finDate.getTime() && minutosFin <= minutosInicio) {
+            return res.status(400).json({ msg: "La hora de fin debe ser mayor que la hora de inicio" });
         }
 
-        await Sport.findByIdAndUpdate(id, {
+        const datosActualizados = {
             ...req.body,
             precioUniforme: precioUniforme || 0,
             nombre: capitalize(nombre)
-        }, { new: true });
+        };
 
-        res.status(200).json({ msg: "Actualización exitosa del Deporte" });
+        const deporteActualizado = await Sport.findByIdAndUpdate(id, datosActualizados, { new: true });
+        
+        if (!deporteActualizado) return res.status(404).json({ msg: "Deporte no encontrado" });
+
+        return res.status(200).json({ msg: "Actualización exitosa del Deporte" });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
+        return res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
     }
 };
 

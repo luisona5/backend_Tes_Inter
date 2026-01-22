@@ -20,10 +20,23 @@ const registrarDirector = async (req, res) => {
 
     const datosExistente = await Director.findOne({ $or: [{ emailDirector }, { cedulaDirector }] });
 
-    if (datosExistente) {
-      return res.status(400).json({ msg: "cedula o email ya se encuentra registrado" });
-    }
+    
     const identificacionDirector = (cedulaDirector ).trim().replace(/[^\d]/g, '');
+    
+    if (datosExistente) 
+        {
+      if (datosExistente.status === 'Inactivo') {
+        return res.status(409).json({ 
+          msg: `Director se encuentra en estado Inactivo. Por favor, actívalo desde la gestión de directores.`,
+          
+        });
+      } else {
+        return res.status(400).json({ 
+          msg: "La cédula o email ya se encuentra registrado y está activo" 
+        });
+      }
+    }
+
 
     if (!/^\d{10}$/.test(identificacionDirector)) { 
     return res.status(400).json({ msg: " Ingresa Identificación válida. " });
@@ -76,8 +89,7 @@ const listarDirector = async (req,res)=>{
     try {
         const directores = 
         
-        await Director.find({ estadoDirector: true, 
-                              administrator: req.administratorHeader._id 
+        await Director.find({   administrator: req.administratorHeader._id 
             })
         .select(" -createdAt -updatedAt -__v")
         .populate('administrador','_id nombre apellido')

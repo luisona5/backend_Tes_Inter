@@ -10,6 +10,7 @@ import routerCategoria from './routers/Categoria_routes.js'
 import routerAprobacion from './routers/aprobacion_routes.js'
 import routeruniforme from './routers/uniforme_routes.js'
 import routerForgot from './routers/Forgot_routes.js'
+import routerStatus from './routers/Status_routes.js'
 
  const app = express()
 
@@ -53,6 +54,9 @@ app.use('/api',routerAprobacion)
 app.use('/api', routeruniforme)
 
 app.use('/api',routerForgot)
+
+app.use('/api',routerStatus)
+
 
  
  app.use((req,res)=>{res.status(404).send('Endpoint no encontrado')})

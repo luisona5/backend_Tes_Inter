@@ -20,8 +20,18 @@ const registrarEstudiante = async (req, res) => {
 
     const datosExistente = await Estudiante.findOne({ $or: [{ emailEstudiante }, { cedulaEstudiante }] });
 
-    if (datosExistente) {
-      return res.status(400).json({ msg: "cedula o email ya se encuentra registrado" });
+     if (datosExistente) 
+        {
+      if (datosExistente.status === 'Inactivo') {
+        return res.status(409).json({ 
+          msg: `Estudiante se encuentra en estado Inactivo. Por favor, actívalo desde la gestión de estudinates.`,
+          
+        });
+      } else {
+        return res.status(400).json({ 
+          msg: "La cédula o email ya se encuentra registrado y está activo" 
+        });
+      }
     }
     
     const identificacionEstudiante = (cedulaEstudiante || '').trim().replace(/[^\d]/g, '');

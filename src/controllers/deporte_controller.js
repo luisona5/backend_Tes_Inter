@@ -12,6 +12,10 @@ const obtenerCategorias = async (req, res) => {
     return res.status(500).json({ msg: `❌ Error al obtener categorías - ${error.message}` });
   }
 };
+const getEcuadorDate = () => {
+  const stringEcuador = new Date().toLocaleString("en-US", { timeZone: "America/Guayaquil" });
+  return new Date(stringEcuador);
+};
 
 const registrarDeporte = async (req, res) => {
   try {
@@ -41,10 +45,7 @@ const registrarDeporte = async (req, res) => {
       return res.status(400).json({ msg: "El precio del uniforme debe ser mayor o igual a 0"});
     }
 
-    if (!fechaInicio || !fechaFin || !horaInicio || !horaFin || !EntrenamientoDia || !EntrenamientoHora) {
-      return res.status(400).json({ msg: "Faltan fechas u horas" });
-    }
-
+    // --- AJUSTE DE FECHAS DE INPUT ---
     const [yi, mi, di] = fechaInicio.split("-");
     const inicioDate = new Date(yi, mi - 1, di);
     inicioDate.setHours(0, 0, 0, 0);
@@ -57,39 +58,12 @@ const registrarDeporte = async (req, res) => {
     const diaDate = new Date(y, m - 1, d);
     diaDate.setHours(0, 0, 0, 0);
 
-    // ============================================
-    // ✅ MODIFICACIÓN: RESTAR 5 HORAS AL UTC
-    // ============================================
-    const ahoraUTC = new Date(); // Hora UTC del servidor (Vercel)
-    const ahoraLocal = new Date(ahoraUTC); // Copia para ajustar
+    // --- CORRECCIÓN PARA VERCEL (HORA ECUADOR) ---
+    const ahoraLocal = getEcuadorDate(); // Obtiene la fecha/hora real de Ecuador
     
-    // RESTAR 5 HORAS para Ecuador (GMT-5)
-    // Obtener la hora UTC y restarle 5
-    const horaUTC = ahoraUTC.getUTCHours();
-    const minutosUTC = ahoraUTC.getUTCMinutes();
-    
-    // Calcular nueva hora ajustada (puede dar negativo si UTC < 5)
-    let nuevaHora = horaUTC - 5;
-    
-    // Manejar caso cuando pasa a día anterior (ej: 02:00 UTC = 21:00 Ecuador del día anterior)
-    if (nuevaHora < 0) {
-      nuevaHora += 24;
-      // También deberíamos ajustar la fecha, pero para validación de "hoy" no es crítico
-    }
-    
-    ahoraLocal.setUTCHours(nuevaHora, minutosUTC, 0, 0);
-    
-    // Para "hoy" usamos la fecha local ajustada
     const hoy = new Date(ahoraLocal);
-    hoy.setHours(0, 0, 0, 0);
-    
-    // Para debug (opcional)
-    console.log('DEBUG HORAS:');
-    console.log('UTC:', ahoraUTC.toISOString(), 'Hora UTC:', horaUTC + ':' + minutosUTC);
-    console.log('Ecuador:', ahoraLocal.toString(), 'Hora Ecuador:', nuevaHora + ':' + minutosUTC);
-    // ============================================
+    hoy.setHours(0, 0, 0, 0); // Fecha actual sin horas para comparar días
 
-    // Validaciones de fechas
     if (inicioDate < hoy) {
       return res.status(400).json({ msg: "La fecha de inicio debe ser hoy o una fecha futura" });
     }
@@ -106,41 +80,26 @@ const registrarDeporte = async (req, res) => {
       return res.status(400).json({ msg: "La fecha de Entrenamiento debe ser mayor que la fecha fin" });
     }
 
-    // Parsear horas a minutos
     const [hiH, hiM] = horaInicio.split(":").map(Number);
     const [hfH, hfM] = horaFin.split(":").map(Number);
-    const [hH, hM] = EntrenamientoHora.split(":").map(Number);
 
     const minutosInicio = hiH * 60 + hiM;
     const minutosFin = hfH * 60 + hfM;
-    const minutosEntrenamiento = hH * 60 + hM;
 
     const mismaFecha = inicioDate.getTime() === finDate.getTime();
     
     if (mismaFecha && minutosFin <= minutosInicio) {
-      return res.status(400).json({ 
-        msg: "La hora de fin debe ser mayor que la hora de inicio" 
-      });
+      return res.status(400).json({ msg: "La hora de fin debe ser mayor que la hora de inicio" });
     }
 
+    // --- VALIDACIÓN DE HORA ACTUAL (ECUADOR) ---
     const esHoy = inicioDate.getTime() === hoy.getTime();
-
-    // ============================================
-    // ✅ USAR HORA LOCAL AJUSTADA (UTC-5)
-    // ============================================
     const horaActualLocal = ahoraLocal.getHours() * 60 + ahoraLocal.getMinutes();
     const horaActualStr = `${ahoraLocal.getHours().toString().padStart(2, '0')}:${ahoraLocal.getMinutes().toString().padStart(2, '0')}`;
 
     if (esHoy && minutosInicio < horaActualLocal) {
       return res.status(400).json({ 
-        msg: `La hora de inicio debe ser ${horaActualStr} o mayor (hora Ecuador)` 
-      });
-    }
-    // ============================================
-
-    if (!minutosEntrenamiento || minutosEntrenamiento === 0) {
-      return res.status(400).json({ 
-        msg: "Debe elegir una hora válida para el entrenamiento" 
+        msg: `La hora de inicio debe ser ${horaActualStr} o mayor (Hora Ecuador)` 
       });
     }
 
@@ -156,7 +115,6 @@ const registrarDeporte = async (req, res) => {
     });
 
     await nuevoDeporte.save();
-
     return res.status(201).json({ msg: "Registro exitoso del deporte" });
 
   } catch (error) {
@@ -164,7 +122,6 @@ const registrarDeporte = async (req, res) => {
     return res.status(500).json({ msg: `❌ Error en el servidor - ${error.message}` });
   }
 };
-
 
 
 const listarDeporte = async (req,res)=>{
@@ -247,7 +204,6 @@ const actualizarDeporte = async(req,res)=>{
       return res.status(400).json({ msg: "Faltan fechas u horas" });
     }
 
-    // ✅ Parsear fechas correctamente (con reset de horas)
     const [yi, mi, di] = fechaInicio.split("-");
     const inicioDate = new Date(yi, mi - 1, di);
     inicioDate.setHours(0, 0, 0, 0);
@@ -260,13 +216,10 @@ const actualizarDeporte = async(req,res)=>{
     const diaDate = new Date(y, m - 1, d);
     diaDate.setHours(0, 0, 0, 0);
 
-    // ============================================
-    // ✅ MODIFICACIÓN: RESTAR 5 HORAS AL UTC
-    // ============================================
+   
     const ahoraUTC = new Date();
     const ahoraLocal = new Date(ahoraUTC);
     
-    // RESTAR 5 HORAS para Ecuador (GMT-5)
     const horaUTC = ahoraUTC.getUTCHours();
     const minutosUTC = ahoraUTC.getUTCMinutes();
     
@@ -279,7 +232,6 @@ const actualizarDeporte = async(req,res)=>{
     
     const hoy = new Date(ahoraLocal);
     hoy.setHours(0, 0, 0, 0);
-    // ============================================
 
     if (inicioDate < hoy) {
       return res.status(400).json({ msg: "La fecha de inicio debe ser hoy o una fecha futura" });
@@ -293,7 +245,6 @@ const actualizarDeporte = async(req,res)=>{
       return res.status(400).json({ msg: "La fecha de fin debe ser igual o mayor que la fecha de inicio" });
     }
 
-    // ✅ CORREGIDO: Entrenamiento debe ser MAYOR
     if (diaDate <= finDate) {
       return res.status(400).json({ msg: "La fecha de Entrenamiento debe ser mayor que la fecha fin" });
     }
@@ -306,7 +257,6 @@ const actualizarDeporte = async(req,res)=>{
     const minutosFin = hfH * 60 + hfM;
     const minutosEntrenamiento = hH * 60 + hM;
 
-    // ✅ Validar horas solo si es el mismo día
     const mismaFecha = inicioDate.getTime() === finDate.getTime();
     
     if (mismaFecha && minutosFin <= minutosInicio) {
@@ -315,13 +265,10 @@ const actualizarDeporte = async(req,res)=>{
       });
     }
 
-    // ============================================
-    // ✅ USAR HORA LOCAL AJUSTADA (UTC-5)
-    // ============================================
+  
     const horaActualLocal = ahoraLocal.getHours() * 60 + ahoraLocal.getMinutes();
     const horaActualStr = `${ahoraLocal.getHours().toString().padStart(2, '0')}:${ahoraLocal.getMinutes().toString().padStart(2, '0')}`;
 
-    // ✅ Verificar si la fecha de inicio es HOY
     const esHoy = inicioDate.getTime() === hoy.getTime();
 
     if (esHoy && minutosInicio < horaActualLocal) {
@@ -329,7 +276,6 @@ const actualizarDeporte = async(req,res)=>{
         msg: `La hora de inicio debe ser ${horaActualStr} o mayor (hora Ecuador)` 
       });
     }
-    // ============================================
 
     if (!minutosEntrenamiento || minutosEntrenamiento === 0) {
       return res.status(400).json({  

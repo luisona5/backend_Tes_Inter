@@ -39,7 +39,6 @@ const registrarDeporte = async (req, res) => {
             return res.status(400).json({ msg: "Debes llenar todos los campos" });
         }
 
-        // Procesamiento de Fechas
         const [yi, mi, di] = fechaInicio.split("-");
         const inicioDate = new Date(yi, mi - 1, di);
         inicioDate.setHours(0, 0, 0, 0);

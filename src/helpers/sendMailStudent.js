@@ -38,7 +38,7 @@ const sendMailStudent = (userMail, password) => {
                 Para iniciar sesión, haz clic en el botón de abajo:
               </p>
               <p style="text-align:center;margin:0 0 30px 0;">
-                <a href="${process.env.VITE_URL_FRONTlEND}login" style="display:inline-block;padding:12px 20px;background-color:#007BFF;color:#ffffff;text-decoration:none;border-radius:5px;font-size:16px;">
+                <a href="${process.env.VITE_URL_FRONTEND}login" style="display:inline-block;padding:12px 20px;background-color:#007BFF;color:#ffffff;text-decoration:none;border-radius:5px;font-size:16px;">
                   Iniciar sesión
                 </a>
               </p>

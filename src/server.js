@@ -11,6 +11,7 @@ import routerAprobacion from './routers/aprobacion_routes.js'
 import routeruniforme from './routers/uniforme_routes.js'
 import routerForgot from './routers/Forgot_routes.js'
 import routerStatus from './routers/Status_routes.js'
+import routerEstadistica from './routers/estadistica_routes.js'
 
  const app = express()
 
@@ -56,6 +57,8 @@ app.use('/api', routeruniforme)
 app.use('/api',routerForgot)
 
 app.use('/api',routerStatus)
+
+app.use('/api',routerEstadistica)
 
 
  

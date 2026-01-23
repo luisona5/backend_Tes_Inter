@@ -69,14 +69,12 @@ const cambiarStatusEstudiante = async (req, res) => {
             });
         }
 
-        // Buscar estudiante
         const estudiante = await Estudiante.findById(id);
         
         if (!estudiante) {
             return res.status(404).json({ msg: "Estudiante no encontrado" });
         }
 
-        // ✅ PERMISOS: Verificar que sea Director o Administrador
         const esAdministrador = req.administratorHeader?._id;
         const esDirector = req.directorHeader?._id;
 
@@ -88,14 +86,7 @@ const cambiarStatusEstudiante = async (req, res) => {
 
         
 
-        // Si es Administrador: verificar que el estudiante le pertenezca
-        if (esAdministrador && estudiante.administrador?.toString() !== esAdministrador.toString()) {
-            return res.status(403).json({ 
-                msg: "No tienes permisos para modificar este estudiante" 
-            });
-        }
 
-        // Actualizar status
         estudiante.status = status;
         await estudiante.save();
 
@@ -117,7 +108,41 @@ const cambiarStatusEstudiante = async (req, res) => {
     }
 };
 
+const obtenerEstadoEstudiante = async (req, res) => {
+    try {
+        // Obtener el ID del estudiante desde el token/header
+        const estudianteId = req.estudianteHeader?._id;
+        
+        if (!estudianteId) {
+            return res.status(401).json({ 
+                msg: "No se pudo identificar al estudiante" 
+            });
+        }
 
+        const estudiante = await Estudiante.findById(estudianteId)
+            .select('nombreEstudiante apellidoEstudiante status cedulaEstudiante emailEstudiante');
+        
+        if (!estudiante) {
+            return res.status(404).json({ 
+                msg: "Estudiante no encontrado" 
+            });
+        }
+        
+        res.status(200).json({
+            status: estudiante.status || 'Activo',
+            nombre: estudiante.nombreEstudiante,
+            apellido: estudiante.apellidoEstudiante,
+            cedula: estudiante.cedulaEstudiante,
+            email: estudiante.emailEstudiante
+        });
+        
+    } catch (error) {
+        console.error("Error al obtener estado del estudiante:", error);
+        res.status(500).json({ 
+            msg: `❌ Error en el servidor - ${error.message}` 
+        });
+    }
+};
 
 
 

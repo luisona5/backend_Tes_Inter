@@ -60,6 +60,5 @@ export {
     crearTokenJWT,
     verificarTokenJWT,
      
-    
 }
 

@@ -221,7 +221,6 @@ const registroIndependienteStudent = async (req,res)=>{
         nombreEstudiante: capitalize(nombreEstudiante),
         apellidoEstudiante: capitalize(apellidoEstudiante),
         direccionEstudiante: capitalize(direccionEstudiante),
-        semestre: capitalize(semestre),
         genero: capitalize(genero),
 
     }
@@ -267,10 +266,15 @@ const loginEstudiante = async(req,res)=>{
           return res.status(404).json({msg:"Debes llenar todos los campos"})
 
         const estudianteBDD = await Estudiante.findOne({emailEstudiante})
-                                              .select("-status -__v  -updatedAt -createdAt")
+                                              .select(" -__v  -updatedAt -createdAt")
 
         if(!estudianteBDD)
            return res.status(404).json({msg:"Usuario o contraseña incorrecta"})
+
+        if(estudianteBDD.status === false || estudianteBDD.status === "Inactivo") {
+          return res.status(403).json({msg: "Tu cuenta está inactiva. Por favor contacta al administrador o director.",
+          })
+        }
 
         const fueCreadoPorAdminODirector = estudianteBDD.administrador || estudianteBDD.director;
         

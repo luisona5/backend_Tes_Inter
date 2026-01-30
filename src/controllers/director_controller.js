@@ -232,6 +232,9 @@ const loginDirector = async(req,res)=>{
         if(!directorBDD)
            return res.status(404).json({msg:"Usuario o contraseña incorrecta"})
 
+        if(directorBDD.status === false || directorBDD.status === "Inactivo")
+        return res.status(403).json({msg: "Tu cuenta está inactiva. Por favor contacta al administrador."})
+
         const verificarPassword = await directorBDD.matchPassword(passwordDirector)
 
         if(!verificarPassword) 

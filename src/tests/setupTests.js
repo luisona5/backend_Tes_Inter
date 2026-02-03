@@ -1,10 +1,10 @@
 
-
-
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
 jest.mock("../config/nodemailers.js", () => ({
+  __esModule: true,
+  default: jest.fn(async () => "Correo simulado"),
   sendMailToRegister: jest.fn(async () => "Correo simulado"),
   sendMailToRecoveryPassword: jest.fn(async () => "Correo simulado"),
 }));
@@ -31,6 +31,7 @@ let mongoServer;
 
 beforeAll(async () => {
     process.env.SESSION_SECRET = process.env.SESSION_SECRET || "test_secret";
+    process.env.JWT_SECRET = process.env.JWT_SECRET || "test_jwt_secret";
     process.env.FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
     mongoServer = await MongoMemoryServer.create();

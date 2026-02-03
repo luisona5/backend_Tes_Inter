@@ -223,6 +223,7 @@ const listarInscripciones = async (req, res) => {
         .populate('estudiante','_id nombreEstudiante apellidoEstudiante')
         .populate('deporte', '_id nombre detalle EntrenamientoDia EntrenamientoHora')
         .populate('categoria', '_id nombre descripcion')
+        .populate('uniforme', '_id talla nombre descripcion ')
 
 
         res.status(200).json(inscripciones)
@@ -256,6 +257,7 @@ const listarInscripcionesDirector = async (req, res) => {
         .populate('estudiante', '_id nombreEstudiante apellidoEstudiante emailEstudiante cedulaEstudiante')
         .populate('deporte', '_id nombre detalle EntrenamientoDia EntrenamientoHora')
         .populate('categoria', '_id nombre descripcion')
+        .populate('uniforme', '_id talla nombre detalle precioUniforme ')
 
         res.status(200).json(inscripciones);
 
@@ -279,6 +281,8 @@ const detalleInscripcion = async(req, res) => {
                                               .populate('estudiante', '_id nombreEstudiante apellidoEstudiante emailEstudiante cedulaEstudiante')
                                               .populate('deporte', '_id nombre detalle  fechaInicio horaInicio fechaFin horaFin lugar EntrenamientoDia EntrenamientoHora precioUniforme')
                                               .populate('categoria', '_id nombre descripcion')
+                                              .populate('uniforme', '_id talla nombre detalle precioUniforme ')
+
 
   
         const uniforme = await Uniforme.findOne({ 

@@ -23,6 +23,6 @@ router.post('/administrador/recuperarpassword',recuperarPassword)
 
 router.get('/administrador/recuperarpassword/:token',comprobarTokenPasword)
 
-router.post('administrador/nuevopassword/:token',crearNuevoPassword)
+router.post('/administrador/nuevopassword/:token',crearNuevoPassword)
 
 export default router

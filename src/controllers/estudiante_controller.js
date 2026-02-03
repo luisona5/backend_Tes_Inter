@@ -184,6 +184,8 @@ const actualizarEstudiante = async(req,res)=>{
 const registroIndependienteStudent = async (req,res)=>{
 
     try {
+      
+
         const {emailEstudiante,passwordEstudiante,
                 cedulaEstudiante,telefonoEstudiante,
                 nombreEstudiante,apellidoEstudiante,

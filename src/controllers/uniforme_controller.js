@@ -119,7 +119,6 @@ const listarUniformeEstudiante = async (req, res) => {
         })
         .sort({ createdAt: -1 });
 
-        // Filtrar uniformes que tengan inscripción (puede que algunos no por el match)
         const uniformesConInscripcion = uniformes.filter(u => u.inscripcion !== null);
 
         res.status(200).json(uniformesConInscripcion);
@@ -142,9 +141,38 @@ const listarUniformeParaDirector = async (req, res) => {
         res.status(500).json({ mensaje: "Error al obtener uniformes del estudiante" });
     }
 };
+
+const obtenerUniformePorInscripcion = async (req, res) => {
+    try {
+        const { inscripcionId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(inscripcionId)) {
+            return res.status(400).json({ msg: "ID de inscripción inválido" });
+        }
+
+        const uniforme = await Uniforme.findOne({ inscripcion: inscripcionId })
+            .select("-__v")
+            .populate('deporte', 'nombre detalle precioUniforme')
+            .populate({
+                path: 'inscripcion',
+                select: 'nombre apellido cedula estado',
+            })
+            .populate('estudiante', 'nombre apellido cedula');
+
+        
+
+        res.status(200).json(uniforme);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ 
+            msg: "Error al obtener el uniforme de la inscripción" 
+        });
+    }
+};
 export {
     registrarUniforme,
     eliminarUniforme,
     listarUniformeEstudiante,
-    listarUniformeParaDirector
+    listarUniformeParaDirector,
+    obtenerUniformePorInscripcion
 }

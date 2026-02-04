@@ -146,7 +146,6 @@ const registrarInscripcion = async (req, res) => {
       });
     }
 
-    // ⭐ OBTENER EL ID DEL ESTUDIANTE PRIMERO
     let estudianteId = null;
     
     if (req.estudianteHeader && req.estudianteHeader._id) {
@@ -159,7 +158,6 @@ const registrarInscripcion = async (req, res) => {
       }
     }
 
-    // ⭐ VALIDACIÓN CORRECTA - Solo validar si el ESTUDIANTE ya está inscrito en este DEPORTE
     if (estudianteId) {
       const yaInscrito = await Inscripcion.findOne({
         estudiante: estudianteId,

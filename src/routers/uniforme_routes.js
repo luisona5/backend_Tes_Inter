@@ -2,6 +2,7 @@ import {Router} from 'express'
 import {  eliminarUniforme,
         listarUniformeEstudiante,
         listarUniformeParaDirector,
+        obtenerUniformePorInscripcion,
         registrarUniforme } from '../controllers/uniforme_controller.js'
 import { verificarTokenJWT } from '../middlewares/JWT.js'
 const router = Router()
@@ -13,7 +14,10 @@ router.get('/lista-de-uniforme/listar/:id',verificarTokenJWT,listarUniformeEstud
 
 router.delete('/uniforme/eliminar/:id',verificarTokenJWT,eliminarUniforme)
 
-router.get('/lista-de-uniforme/estudiante/:Id', verificarTokenJWT, listarUniformeParaDirector);
+router.get('/lista-de-uniforme/estudiante/:id', verificarTokenJWT, listarUniformeParaDirector);
+
+router.get('/uniforme/inscripcion/:inscripcionId', verificarTokenJWT, obtenerUniformePorInscripcion)
+
 
 
 export default router

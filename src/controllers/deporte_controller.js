@@ -189,10 +189,12 @@ const detalleDeporte = async(req,res)=>{
 const eliminarDeporte = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({msg:`No existe el Deporte ${id}`});
+    if (!mongoose.Types.ObjectId.isValid(id)) 
+        return res.status(404).json({msg:`No existe el Deporte ${id}`});
     const deporte = await Sport.findById(id);
-    if (!deporte) return res.status(404).json({msg: "Deporte no encontrado"});
-    if (deporte.director.toString() !== req.directorHeader._id.toString()) return res.status(403).json({msg: "No tienes permiso para eliminar este deporte"});
+    if (!deporte) 
+        return res.status(404).json({msg: "Deporte no encontrado"});
+    
     await Sport.findByIdAndUpdate(id, {estadoDeporte: false});
     res.status(200).json({msg: "Deporte eliminado exitosamente"});
   } catch (error) {
